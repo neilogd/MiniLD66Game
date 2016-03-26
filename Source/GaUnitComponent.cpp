@@ -68,7 +68,6 @@ void GaUnitComponent::update( GaReal Tick )
 	{
 		
 	}
-	
 
 	// Do movement.
 	{

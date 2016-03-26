@@ -40,6 +40,7 @@ void GaGameComponent::StaticRegisterClass()
 
 GaGameComponent::GaGameComponent()
 {
+	InputState_.fill( InputState::IDLE );
 }
 
 
@@ -69,26 +70,24 @@ void GaGameComponent::onAttach( ScnEntityWeakRef Parent )
 		[ this ]( EvtID ID, const EvtBaseEvent& InEvent )
 		{
 			auto Event = InEvent.get< OsEventInputMouse >();
-
-			if( Event.ButtonCode_ == 0 )
+			auto& InputState = InputState_[ Event.ButtonCode_ ];
+			auto& BeginDragMouseEvent = BeginDragMouseEvent_[ Event.ButtonCode_ ];
+			switch( InputState )
 			{
-				switch( InputState_ )
-				{
-				case InputState::IDLE:
-					InputState_ = InputState::DOWN;
-					BeginDragMouseEvent_ = Event;
-					break;
-				case InputState::DOWN:
-					InputState_ = InputState::DOWN;
-					BeginDragMouseEvent_ = Event;
-					break;
-				case InputState::DRAGGING:
-					InputState_ = InputState::DRAGGING;
-					onCancelDrag( Event ); // Shouldn't have been dragging, cancel it.
-					BeginDragMouseEvent_ = Event;
-					onBeginDrag( Event );
-					break;
-				}
+			case InputState::IDLE:
+				InputState = InputState::DOWN;
+				BeginDragMouseEvent = Event;
+				break;
+			case InputState::DOWN:
+				InputState = InputState::DOWN;
+				BeginDragMouseEvent = Event;
+				break;
+			case InputState::DRAGGING:
+				InputState = InputState::DRAGGING;
+				onCancelDrag( Event ); // Shouldn't have been dragging, cancel it.
+				BeginDragMouseEvent = Event;
+				onBeginDrag( Event );
+				break;
 			}
 
 			LastMouseEvent_ = Event;
@@ -99,27 +98,20 @@ void GaGameComponent::onAttach( ScnEntityWeakRef Parent )
 		[ this ]( EvtID ID, const EvtBaseEvent& InEvent )
 		{
 			auto Event = InEvent.get< OsEventInputMouse >();
-
-			if( Event.ButtonCode_ == 0 )
+			auto& InputState = InputState_[ Event.ButtonCode_ ];
+			switch( InputState )
 			{
-				switch( InputState_ )
-				{
-				case InputState::IDLE:
-					InputState_ = InputState::DOWN;
-					break;
-				case InputState::DOWN:
-					InputState_ = InputState::IDLE;
-					onClick( Event );
-					break;
-				case InputState::DRAGGING:
-					InputState_ = InputState::IDLE;
-					onEndDrag( Event );
-					break;
-				}
-			}
-			else
-			{
+			case InputState::IDLE:
+				InputState = InputState::DOWN;
+				break;
+			case InputState::DOWN:
+				InputState = InputState::IDLE;
 				onClick( Event );
+				break;
+			case InputState::DRAGGING:
+				InputState = InputState::IDLE;
+				onEndDrag( Event );
+				break;
 			}
 			LastMouseEvent_ = Event;
 			return evtRET_PASS;
@@ -128,39 +120,41 @@ void GaGameComponent::onAttach( ScnEntityWeakRef Parent )
 	OsCore::pImpl()->subscribe( osEVT_INPUT_MOUSEMOVE, this,
 		[ this ]( EvtID ID, const EvtBaseEvent& InEvent )
 		{
-			auto Event = InEvent.get< OsEventInputMouse >();
-
-			if( Event.ButtonCode_ == 0 )
+			for( size_t Idx = 0; Idx < InputState_.size(); ++Idx )
 			{
-				switch( InputState_ )
+				auto Event = InEvent.get< OsEventInputMouse >();
+				auto& InputState = InputState_[ Idx ];
+				auto& BeginDragMouseEvent = BeginDragMouseEvent_[ Idx ];
+				switch( InputState )
 				{
 				case InputState::IDLE:
-					InputState_ = InputState::IDLE;
+					InputState = InputState::IDLE;
 					break;
 				case InputState::DOWN:
 					{
-						InputState_ = InputState::DOWN;
+						InputState = InputState::DOWN;
 
 						// If mouse moves enough, switch to dragging.
-						MaVec2d A( BeginDragMouseEvent_.MouseX_, BeginDragMouseEvent_.MouseY_ );
+						MaVec2d A( BeginDragMouseEvent.MouseX_, BeginDragMouseEvent.MouseY_ );
 						MaVec2d B( Event.MouseX_, Event.MouseY_ );
 
 						// Wide range for drag for non-mouse people.
-						if( ( A - B ).magnitude() > 12.0f )
+						if( ( A - B ).magnitude() > 16.0f )
 						{
-							InputState_ = InputState::DRAGGING;
-							onBeginDrag( BeginDragMouseEvent_ );
+							InputState = InputState::DRAGGING;
+							onBeginDrag( BeginDragMouseEvent );
 						}
 					}				
 					break;
 				case InputState::DRAGGING:
-					InputState_ = InputState::DRAGGING;
+					InputState = InputState::DRAGGING;
+					Event.ButtonCode_ = Idx;
 					onUpdateDrag( Event );
 					break;
 				}
 			}
 
-			LastMouseEvent_ = Event;
+			LastMouseEvent_ = InEvent.get< OsEventInputMouse >();
 			return evtRET_PASS;
 		} );
 
@@ -184,41 +178,56 @@ void GaGameComponent::onBeginDrag( OsEventInputMouse Event )
 
 void GaGameComponent::onUpdateDrag( OsEventInputMouse Event )
 {
-	SelectionBoxB_ = MaVec2d( Event.MouseX_, Event.MouseY_ );
+	if( Event.ButtonCode_ == 0 )
+	{
+		SelectionBoxB_ = MaVec2d( Event.MouseX_, Event.MouseY_ );
+	}
 }
 
 
 void GaGameComponent::onEndDrag( OsEventInputMouse Event )
 {
-	SelectionBoxB_ = MaVec2d( Event.MouseX_, Event.MouseY_ );
-	SelectionBoxEnable_ = BcFalse;
-
-	SelectedUnitIDs_.clear();
-
-	// Do selection. Use centre points of units, rather than frustum (do that later maybe?)
-	// Check for unit.
-	for( auto* Unit : Units_ )
+	if( Event.ButtonCode_ == 0 )
 	{
-		auto ScreenPos = Camera_->getScreenPosition( Unit->getParentEntity()->getWorldPosition() );
-		auto A = MaVec2d( 
-			std::min( SelectionBoxA_.x(), SelectionBoxB_.x() ),
-			std::min( SelectionBoxA_.y(), SelectionBoxB_.y() ) );
-		auto B = MaVec2d( 
-			std::max( SelectionBoxA_.x(), SelectionBoxB_.x() ),
-			std::max( SelectionBoxA_.y(), SelectionBoxB_.y() ) );		
+		SelectionBoxB_ = MaVec2d( Event.MouseX_, Event.MouseY_ );
+		SelectionBoxEnable_ = BcFalse;
 
-		if( ScreenPos.x() > A.x() && ScreenPos.y() > A.y() && 
-			ScreenPos.x() < B.x() && ScreenPos.y() < B.y() )
+		SelectedUnitIDs_.clear();
+
+		// Do selection. Use centre points of units, rather than frustum (do that later maybe?)
+		// Check for unit.
+		for( auto* Unit : Units_ )
 		{
-			SelectedUnitIDs_.push_back( Unit->getID() );
+			auto ScreenPos = Camera_->getScreenPosition( Unit->getParentEntity()->getWorldPosition() );
+			auto A = MaVec2d( 
+				std::min( SelectionBoxA_.x(), SelectionBoxB_.x() ),
+				std::min( SelectionBoxA_.y(), SelectionBoxB_.y() ) );
+			auto B = MaVec2d( 
+				std::max( SelectionBoxA_.x(), SelectionBoxB_.x() ),
+				std::max( SelectionBoxA_.y(), SelectionBoxB_.y() ) );		
+
+			if( ScreenPos.x() > A.x() && ScreenPos.y() > A.y() && 
+				ScreenPos.x() < B.x() && ScreenPos.y() < B.y() )
+			{
+				SelectedUnitIDs_.push_back( Unit->getID() );
+			}
 		}
+	}
+
+	// Do click anyway.
+	if( Event.ButtonCode_ == 1 )
+	{
+		onClick( Event );
 	}
 }
 
 
 void GaGameComponent::onCancelDrag( OsEventInputMouse Event )
 {
-	SelectionBoxEnable_ = BcFalse;
+	if( Event.ButtonCode_ == 0 )
+	{
+		SelectionBoxEnable_ = BcFalse;
+	}
 }
 
 

@@ -51,7 +51,7 @@ GaCameraComponent::GaCameraComponent()
 {
 	CameraState_ = STATE_IDLE;
 	NextCameraState_ = STATE_IDLE;
-	CameraDistance_ = 128.0f;
+	CameraDistance_ = 32.0f;
 	CameraZoom_ = 0.0f;
 	MoveFast_ = BcFalse;
 	CameraRotation_ = MaVec3d( BcPI * 0.4f, 0.0f, 0.0f );

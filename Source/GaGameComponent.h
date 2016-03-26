@@ -58,9 +58,9 @@ private:
 		DRAGGING,
 	};
 
-	InputState InputState_ = InputState::IDLE;
-	OsEventInputMouse BeginDragMouseEvent_;
-	
+	std::array< InputState, 8 > InputState_;
+	std::array< OsEventInputMouse, 8 > BeginDragMouseEvent_;
+
 	OsEventInputMouse LastMouseEvent_;
 
 	BcBool SelectionBoxEnable_;

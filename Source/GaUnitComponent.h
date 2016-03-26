@@ -37,16 +37,24 @@ public:
 
 private:
 	class GaGameComponent* GameComponent_;
+
 	BcS32 MaxHealth_ = 100;
 	BcS32 MaxVelocity_ = 1;
 
-	BcU32 ID_ = BcErrorCode;
+	// General.
+	BcU32 TeamFlags_ = 0;
 
+	// Unit state.
 	GaUnitState CurrState_;
 	GaUnitState PrevState_;
-	
-	// Movement.
+		
+	// Movement commands.
 	GaVec3d MovePosition_;
+
+	// Attack commands.
+
+
+	BcU32 ID_ = BcErrorCode;
 
 	
 };
