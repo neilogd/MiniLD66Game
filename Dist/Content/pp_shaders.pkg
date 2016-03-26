@@ -1,0 +1,270 @@
+{
+	"resources" : [
+		{
+			"type"			: "ScnShader",
+			"name"			: "pp_copy",
+			"sources" 		: {
+				"D3D11_4_0" : "Content/Engine/pp_copy.psf",
+				"GLSL_430" : "Content/Engine/pp_copy.psf",
+				"GLSL_330" : "Content/Engine/pp_copy.psf",
+				"GLSL_ES_100" : "Content/Engine/pp_copy.psf"
+			},
+
+			"@(android)" 		: {
+				"sources" 		: {
+					"GLSL_ES_100" : "Content/Engine/pp_copy.psf"
+				}
+			},
+
+			"@(html5)" 		: {
+				"sources" 		: {
+					"GLSL_ES_100" : "Content/Engine/pp_copy.psf"
+				}
+			},
+
+			"includepermutations" : [
+				"RENDER_POST_PROCESS",
+				"PASS_TRANSPARENT",
+				"MESH_STATIC_2D",
+				"LIGHTING_NONE"
+			],
+
+			"excludepermutations" : [
+			],
+
+			"entrypoints"		: {
+				"vertex" : 		"vertexMain",
+				"pixel" :		"pixelMain"
+			}
+		},
+
+		{
+			"type"			: "ScnShader",
+			"name"			: "pp_h_blur",
+			"sources" 		: {
+				"D3D11_4_0" : "Content/Engine/pp_h_blur.psf",
+				"GLSL_430" : "Content/Engine/pp_h_blur.psf",
+				"GLSL_330" : "Content/Engine/pp_h_blur.psf",
+				"GLSL_ES_100" : "Content/Engine/pp_h_blur.psf"
+			},
+
+			"@(android)" 		: {
+				"sources" 		: {
+					"GLSL_ES_100" : "Content/Engine/pp_h_blur.psf"
+				}
+			},
+
+			"@(html5)" 		: {
+				"sources" 		: {
+					"GLSL_ES_100" : "Content/Engine/pp_h_blur.psf"
+				}
+			},
+
+			"includepermutations" : [
+				"RENDER_POST_PROCESS",
+				"PASS_TRANSPARENT",
+				"MESH_STATIC_2D",
+				"LIGHTING_NONE"
+			],
+
+			"excludepermutations" : [
+			],
+
+			"entrypoints"		: {
+				"vertex" : 		"vertexMain",
+				"pixel" :		"pixelMain"
+			}
+		},
+
+		{
+			"type"			: "ScnShader",
+			"name"			: "pp_v_blur",
+			"sources" 		: {
+				"D3D11_4_0" : "Content/Engine/pp_v_blur.psf",
+				"GLSL_330" : "Content/Engine/pp_v_blur.psf",
+				"GLSL_430" : "Content/Engine/pp_v_blur.psf",
+				"GLSL_ES_100" : "Content/Engine/pp_v_blur.psf"
+			},
+
+			"@(android)" 		: {
+				"sources" 		: {
+					"GLSL_ES_100" : "Content/Engine/pp_v_blur.psf"
+				}
+			},
+
+			"@(html5)" 		: {
+				"sources" 		: {
+					"GLSL_ES_100" : "Content/Engine/pp_v_blur.psf"
+				}
+			},
+
+			"includepermutations" : [
+				"RENDER_POST_PROCESS",
+				"PASS_TRANSPARENT",
+				"MESH_STATIC_2D",
+				"LIGHTING_NONE"
+			],
+
+			"excludepermutations" : [
+			],
+
+			"entrypoints"		: {
+				"vertex" : 		"vertexMain",
+				"pixel" :		"pixelMain"
+			}
+		},
+
+		{
+			"type"			: "ScnShader",
+			"name"			: "pp_deferred_resolve",
+			"sources" 		: {
+				"D3D11_4_0" : "Content/Engine/pp_deferred_resolve.psf",
+				"GLSL_430" : "Content/Engine/pp_deferred_resolve.psf",
+				"GLSL_330" : "Content/Engine/pp_deferred_resolve.psf",
+				"GLSL_ES_100" : "Content/Engine/pp_deferred_resolve.psf"
+			},
+
+
+			"@(android)" 		: {
+				"sources" 		: {
+					"GLSL_ES_100" : "Content/Engine/pp_deferred_resolve.psf"
+				}
+			},
+
+			"@(html5)" 		: {
+				"sources" 		: {
+					"GLSL_ES_100" : "Content/Engine/pp_deferred_resolve.psf"
+				}
+			},
+
+			"includepermutations" : [
+				"RENDER_POST_PROCESS",
+				"PASS_TRANSPARENT",
+				"MESH_STATIC_2D",
+				"LIGHTING_NONE"
+			],
+
+			"excludepermutations" : [
+			],
+
+			"entrypoints"		: {
+				"vertex" : 		"vertexMain",
+				"pixel" :		"pixelMain"
+			}
+		},
+
+		{
+			"type"			: "ScnShader",
+			"name"			: "pp_deferred_point_light",
+			"sources" 		: {
+				"D3D11_4_0" : "Content/Engine/pp_deferred_resolve.psf",
+				"GLSL_330" : "Content/Engine/pp_deferred_resolve.psf",
+				"GLSL_430" : "Content/Engine/pp_deferred_resolve.psf",
+				"GLSL_ES_100" : "Content/Engine/pp_deferred_resolve.psf"
+			},
+
+			"@(android)" 		: {
+				"sources" 		: {
+					"GLSL_ES_100" : "Content/Engine/pp_deferred_resolve.psf"
+				}
+			},
+
+			"@(html5)" 		: {
+				"sources" 		: {
+					"GLSL_ES_100" : "Content/Engine/pp_deferred_resolve.psf"
+				}
+			},
+
+			"includepermutations" : [
+				"RENDER_POST_PROCESS",
+				"PASS_TRANSPARENT",
+				"MESH_STATIC_2D",
+				"LIGHTING_NONE"
+			],
+
+			"excludepermutations" : [
+			],
+
+			"entrypoints"		: {
+				"vertex" : 		"vertexMain",
+				"pixel" :		"pixelMain"
+			}
+		},
+
+		{
+			"type"			: "ScnShader",
+			"name"			: "pp_deferred_spot_light",
+			"sources" 		: {
+				"D3D11_4_0" : "Content/Engine/pp_deferred_resolve.psf",
+				"GLSL_430" : "Content/Engine/pp_deferred_resolve.psf",
+				"GLSL_330" : "Content/Engine/pp_deferred_resolve.psf",
+				"GLSL_ES_100" : "Content/Engine/pp_deferred_resolve.psf"
+			},
+
+			"@(android)" 		: {
+				"sources" 		: {
+					"GLSL_ES_100" : "Content/Engine/pp_deferred_resolve.psf"
+				}
+			},
+
+			"@(html5)" 		: {
+				"sources" 		: {
+					"GLSL_ES_100" : "Content/Engine/pp_deferred_resolve.psf"
+				}
+			},
+
+			"includepermutations" : [
+				"RENDER_POST_PROCESS",
+				"PASS_TRANSPARENT",
+				"MESH_STATIC_2D",
+				"LIGHTING_NONE"
+			],
+
+			"excludepermutations" : [
+			],
+
+			"entrypoints"		: {
+				"vertex" : 		"vertexMain",
+				"pixel" :		"pixelMain"
+			}
+		},
+		{
+			"type"			: "ScnShader",
+			"name"			: "pp_deferred_present",
+			"sources" 		: {
+				"D3D11_4_0" : "Content/Engine/pp_deferred_present.psf",
+				"GLSL_430" : "Content/Engine/pp_deferred_present.psf",
+				"GLSL_330" : "Content/Engine/pp_deferred_present.psf",
+				"GLSL_ES_100" : "Content/Engine/pp_deferred_present.psf"
+			},
+
+			"@(android)" 		: {
+				"sources" 		: {
+					"GLSL_ES_100" : "Content/Engine/pp_deferred_present.psf"
+				}
+			},
+
+			"@(html5)" 		: {
+				"sources" 		: {
+					"GLSL_ES_100" : "Content/Engine/pp_deferred_present.psf"
+				}
+			},
+
+			"includepermutations" : [
+				"RENDER_POST_PROCESS",
+				"PASS_OVERLAY",
+				"MESH_STATIC_2D",
+				"LIGHTING_NONE"
+			],
+
+			"excludepermutations" : [
+			],
+
+			"entrypoints"		: {
+				"vertex" : 		"vertexMain",
+				"pixel" :		"pixelMain"
+			}
+		}
+	]
+}
+

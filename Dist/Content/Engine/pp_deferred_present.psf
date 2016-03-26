@@ -1,0 +1,44 @@
+#include <Psybrus.psh>
+
+//////////////////////////////////////////////////////////////////////////
+// Vertex shader
+#if VERTEX_SHADER
+
+VS_IN_BEGIN
+	DECLARE_IN( float4, InPosition_, POSITION );
+	DECLARE_IN( float4, InTexCoord_, TEXCOORD0 );
+VS_IN_END
+
+VS_OUT_BEGIN
+	DECLARE_OUT( float4, VsTexCoord0, TEXCOORD0 );
+VS_OUT_END
+
+VS_MAIN( vertexMain )
+{
+	VS_ENTER;
+	OUT_POSITION = IN( InPosition_ ).xyzw;
+	OUT( VsTexCoord0 ) = IN( InTexCoord_ );
+	VS_EXIT;
+}
+#endif
+
+//////////////////////////////////////////////////////////////////////////
+// Pixel shader
+#if PIXEL_SHADER
+
+PS_IN_BEGIN
+	DECLARE_IN( float4, VsTexCoord0, TEXCOORD0 );
+PS_IN_END
+#include <PsybrusOutput.psh>
+PSY_SAMPLER_2D( ResolveTex );
+
+PS_MAIN( pixelMain )
+{
+	PS_ENTER;
+	float4 Colour = PSY_SAMPLE_2D( ResolveTex, IN( VsTexCoord0 ).xy );
+	outputFrag[0] = linearToGamma( float4( Colour.xyz, 1.0 ) );
+	PS_EXIT;
+}
+
+#endif
+

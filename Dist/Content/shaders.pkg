@@ -1,0 +1,122 @@
+{
+	"resources" : [
+		{
+			"type"			: "ScnShader",
+			"name"			: "default",
+			"sources" 		: {
+				"D3D11_4_0" : "Content/Engine/default.psf",
+				"GLSL_430" : "Content/Engine/default.psf",
+				"GLSL_330" : "Content/Engine/default.psf",
+				"GLSL_ES_100" : "Content/Engine/default.psf"
+			},
+
+			"@(gles)" : {
+				"sources" 		: {
+					"GLSL_ES_100" : "Content/Engine/default.psf"
+				}
+			},
+
+			"@(html5)" : {
+				"sources" 		: {
+					"GLSL_ES_100" : "Content/Engine/default.psf"
+				}
+			},
+
+			"includepermutations" : [
+				"RENDER_FORWARD",
+				"PASS_OPAQUE",
+				"PASS_TRANSPARENT",
+				"LIGHTING_NONE"
+			],
+
+			"excludepermutations" : [
+			],
+
+			"entrypoints"		: {
+				"vertex" : 		"vertexMain",
+				"pixel" :		"pixelMain"
+			}
+		},
+
+		{
+			"type"			: "ScnShader",
+			"name"			: "textured",
+			"sources" 		: {
+				"D3D11_4_0" : "Content/Engine/textured.psf",
+				"GLSL_430" : "Content/Engine/textured.psf",
+				"GLSL_330" : "Content/Engine/textured.psf",
+				"GLSL_ES_100" : "Content/Engine/textured.psf"
+			},
+
+			"@(android)" : {
+				"sources" 		: {
+					"GLSL_ES_100" : "Content/Engine/textured.psf"
+				}
+			},
+
+			"@(html5)" : {
+				"sources" 		: {
+					"GLSL_ES_100" : "Content/Engine/textured.psf"
+				}
+			},
+
+			"includepermutations" : [
+				"RENDER_FORWARD",
+				"RENDER_DEFERRED",
+				"PASS_OPAQUE",
+				"PASS_TRANSPARENT",
+				"LIGHTING_NONE",
+				"LIGHTING_DIFFUSE"
+			],
+
+			"excludepermutations" : [
+			],
+
+			"entrypoints"		: {
+				"vertex" : 		"vertexMain",
+				"pixel" :		"pixelMain"
+			}
+		},
+
+		{
+			"type"			: "ScnShader",
+			"name"			: "textured_normal_mapped",
+			"sources" 		: {
+				"D3D11_4_0" : "Content/Engine/textured_normal_mapped.psf",
+				"GLSL_430" : "Content/Engine/textured_normal_mapped.psf",
+				"GLSL_330" : "Content/Engine/textured_normal_mapped.psf",
+				"GLSL_ES_100" : "Content/Engine/textured_normal_mapped.psf"
+			},
+
+			"@(android)" : {
+				"sources" 		: {
+					"GLSL_ES_100" : "Content/Engine/textured_normal_mapped.psf"
+				}
+			},
+
+			"@(html5)" : {
+				"sources" 		: {
+					"GLSL_ES_100" : "Content/Engine/textured_normal_mapped.psf"
+				}
+			},
+
+			"includepermutations" : [
+				"RENDER_FORWARD",
+				"RENDER_DEFERRED",
+				"PASS_OPAQUE",
+				"PASS_TRANSPARENT",
+				"LIGHTING_NONE",
+				"LIGHTING_DIFFUSE"
+			],
+
+			"excludepermutations" : [
+			],
+
+			"entrypoints"		: {
+				"vertex" : 		"vertexMain",
+				"pixel" :		"pixelMain"
+			}
+		}
+	]
+}
+

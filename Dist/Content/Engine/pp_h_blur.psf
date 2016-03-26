@@ -1,0 +1,58 @@
+#include <Psybrus.psh>
+
+//////////////////////////////////////////////////////////////////////////
+// Vertex shader
+#if VERTEX_SHADER
+
+VS_IN_BEGIN
+	DECLARE_IN( float4, InPosition_, POSITION );
+	DECLARE_IN( float4, InTexCoord_, TEXCOORD0 );
+VS_IN_END
+
+VS_OUT_BEGIN
+	DECLARE_OUT( float4, VsTexCoord0, TEXCOORD0 );
+VS_OUT_END
+
+VS_MAIN( vertexMain )
+{
+	VS_ENTER;
+	OUT_POSITION = IN( InPosition_ ).xyzw;
+	OUT( VsTexCoord0 ) = IN( InTexCoord_ );
+	VS_EXIT;
+}
+#endif
+
+//////////////////////////////////////////////////////////////////////////
+// Pixel shader
+#if PIXEL_SHADER
+
+PS_IN_BEGIN
+	DECLARE_IN( float4, VsTexCoord0, TEXCOORD0 );
+PS_IN_END
+#include <PsybrusOutput.psh>
+PSY_SAMPLER_2D( InputTexture0 );
+
+PS_MAIN( pixelMain )
+{
+	PS_ENTER;
+	float Offset = 1.0 / InputDimensions_[ 0 ].x;
+	float Radius = Radius_;
+	float MaxRadius = 8.0;
+	float4 Colour = float4( 0.0, 0.0, 0.0, 0.0 );
+	float4 UVOffset = float4( -Radius * Offset, 0.0, 0.0, 0.0 );
+	float4 UVIncr = float4( Offset, 0.0, 0.0, 0.0 );
+
+	for( float Idx = -MaxRadius; Idx <= MaxRadius; Idx += 1.0 )
+	{
+		if( Idx >= -Radius && Idx <= Radius )
+		{
+			Colour += PSY_SAMPLE_2D( InputTexture0, IN( VsTexCoord0 ).xy + UVOffset.xy );
+			UVOffset += UVIncr;
+		}
+	}
+	outputFrag[0] = float4( ( Colour / ( Radius * 2.0 + 1.0 ) ).rgb, 1.0 );
+	PS_EXIT;
+}
+
+#endif
+

@@ -1,0 +1,125 @@
+{
+	"resources" : [
+		{
+			"type"			: "ScnTexture",
+			"name"			: "default",
+
+			"source"		: "Content/Textures/white.png",
+			"spread"		: 32,
+
+			"@(pc)"	: {
+				"format" : "DXT1"
+			},
+
+			"@(android)" : {
+				"format" : "ETC1",
+
+				"@(tegra)" : {
+					"format" : "DXT1"
+				}
+			},
+
+			"@(html5)" : {
+				"format" : "DXT1"
+			}
+		},
+
+		{
+			"type"			: "ScnTexture",
+			"name"			: "black",
+
+			"source"		: "Content/Textures/black.png",
+			"format" : "DXT1",
+			"@(android)"	: {
+				"format" : "ETC1"
+			},
+			"@(html5)" : {
+				"format" : "DXT1"
+			}
+		},
+
+		{
+			"type"			: "ScnTexture",
+			"name"			: "white",
+
+			"source"		: "Content/Textures/white.png",
+			"format" : "DXT1",
+			"@(android)"	: {
+				"format" : "ETC1"
+			},
+			"@(html5)" : {
+				"format" : "DXT1"
+			}
+		},
+
+		{
+			"type"			: "ScnTexture",
+			"name"			: "red",
+
+			"source"		: "Content/Textures/red.png",
+			"format" : "DXT1",
+			"@(android)"	: {
+				"format" : "ETC1"
+			},
+			"@(html5)" : {
+				"format" : "DXT1"
+			}
+		},
+
+		{
+			"type"			: "ScnTexture",
+			"name"			: "green",
+
+			"source"		: "Content/Textures/green.png",
+			"format" : "DXT1",
+			"@(android)"	: {
+				"format" : "ETC1"
+			},
+			"@(html5)" : {
+				"format" : "DXT1"
+			}
+		},
+
+		{
+			"type"			: "ScnTexture",
+			"name"			: "blue",
+
+			"source"		: "Content/Textures/blue.png",
+			"format" : "DXT1",
+			"@(android)"	: {
+				"format" : "ETC1"
+			},
+			"@(html5)" : {
+				"format" : "DXT1"
+			}
+		},
+
+		{
+			"type"			: "ScnTexture",
+			"name"			: "transparent",
+
+			"source"		: "Content/Textures/transparent.png",
+			"format" : "DXT3",
+			"@(android)"	: {
+				"format" : "R8G8B8A8"
+			},
+			"@(html5)" : {
+				"format" : "DXT3"
+			}
+		},
+
+		{
+			"type"			: "ScnTexture",
+			"name"			: "normal",
+
+			"source"		: "Content/Textures/normal.png",
+			"format" : "DXT1",
+			"@(android)"	: {
+				"format" : "ETC1"
+			},
+			"@(html5)" : {
+				"format" : "DXT1"
+			}
+		}
+	]
+}

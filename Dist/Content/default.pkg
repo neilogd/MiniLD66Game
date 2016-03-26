@@ -5,7 +5,45 @@
 			"type"		:		"ScnEntity",
 
 			"components" : [
+				{
+					"$Class" : "ScnEntity",
+					"name" : "CameraEntity",
 
+					"components" : [
+						{
+							"$Class" : "GaCameraComponent",
+
+							"renderers"	: [
+								"$(ScnEntity:deferred_renderer.Renderer)"
+							]
+						},
+
+						{
+							"$Class" : "ScnLightComponent",
+							"diffusecolour" : "0.5, 0.5, 0.5, 1.0",
+							"min" : 16.0,
+							"mid" : 2048.0,
+							"max" : 1000000.0
+						}
+					]
+				},
+
+				{
+					"$Class" : "ScnEntity",
+					"name" : "GameEntity",
+
+					"components" : [
+						{
+							"$Class" : "GaGameComponent",
+							"tickhz" : 15
+						},
+
+						{
+							"$Class" : "ScnModelComponent",
+							"model" : "$(ScnModel:models.sphere)"
+						}
+					]
+				}
 			]
 		}
 	]

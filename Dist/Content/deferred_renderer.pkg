@@ -1,0 +1,192 @@
+{
+	"resources" : [
+		/////////////////////////////////////////////////////////////// 
+		// Entities.
+		{
+			"name"		:		"Renderer",
+			"type"		:		"ScnEntity",
+
+			"components" : [
+				// GBuffer view. Only for opaque objects to render into.
+				{
+					"$Class"				: "ScnViewComponent",
+					"name"					: "view_deferred_gbuffer",
+					"x"						: 0.0,
+					"y"						: 0.0,
+					"width"					: 1.0,
+					"height"				: 1.0,
+					"near"					: 1.0,
+					"far"					: 4000.0,
+					"horizontalfov"			: 0.75,
+					"verticalfov"			: 0.0,
+					"rendermask"			: 1,
+					"clearcolour"			: "0.0, 0.0, 0.0, 0.0",
+					"enablecleardepth"		: true,
+					"renderpermutation"		: "RENDER_DEFERRED",
+					"passes"				: "OPAQUE",
+					"rendertarget"			: [
+						"$(ScnTexture:this.gbuffer_albedo)",
+						"$(ScnTexture:this.gbuffer_material)",
+						"$(ScnTexture:this.gbuffer_normal)",
+						"$(ScnTexture:this.gbuffer_velocity)"
+					],
+					"depthstenciltarget"	: "$(ScnTexture:this.gbuffer_depth)"
+				},
+
+				// Resolve view. This is where want a lit scene to be rendered into ready for compositing transparency into
+				{
+					"$Class"				: "ScnViewComponent",
+					"name"					: "view_deferred_resolve",
+					"x"						: 0.0,
+					"y"						: 0.0,
+					"width"					: 1.0,
+					"height"				: 1.0,
+					"near"					: 1.0,
+					"far"					: 4000.0,
+					"horizontalfov"			: 0.75,
+					"verticalfov"			: 0.0,
+					"rendermask"			: 1,
+					"clearcolour"			: "0.0, 0.0, 0.0, 0.0",
+					"enablecleardepth"		: false,
+					"renderpermutation"		: "RENDER_DEFERRED",
+					"passes"				: "TRANSPARENT",
+					"rendertarget"			: [
+						"$(ScnTexture:this.gbuffer_resolve)"
+					],
+					"depthstenciltarget"	: "$(ScnTexture:this.gbuffer_depth)"
+				},
+
+				// Light -> HDR buffer.
+				{
+					"$Class"				: "ScnDeferredLightingComponent",
+					"rendermask"			: 1,
+					"renderpermutations"	: "RENDER_DEFERRED",
+					"passes"				: "TRANSPARENT",
+
+					"textures"				: {
+						"aAlbedoTex" : "$(ScnTexture:this.gbuffer_albedo)",
+						"aMaterialTex" : "$(ScnTexture:this.gbuffer_material)",
+						"aNormalTex" : "$(ScnTexture:this.gbuffer_normal)",
+						"aVelocityTex" : "$(ScnTexture:this.gbuffer_velocity)",
+						"aDepthTex" : "$(ScnTexture:this.gbuffer_depth)",
+						"aReflectionTex" : "$(ScnTexture:cubemap_textures.cubemap)"
+					},
+
+					"shaders"				: [
+						"$(ScnShader:pp_shaders.pp_deferred_point_light)",
+						"$(ScnShader:pp_shaders.pp_deferred_spot_light)"
+					]
+				},
+
+				// Overlay view. This is the framebuffer.
+				{
+					"$Class"				: "ScnViewComponent",
+					"name"					: "view_deferred_overlay",
+					"x"						: 0.0,
+					"y"						: 0.0,
+					"width"					: 1.0,
+					"height"				: 1.0,
+					"near"					: 1.0,
+					"far"					: 4000.0,
+					"horizontalfov"			: 0.75,
+					"verticalfov"			: 0.0,
+					"rendermask"			: 1,
+					"clearcolour"			: "0.0, 0.0, 0.0, 0.0",
+					"enablecleardepth"		: true,
+					"renderpermutation"		: "RENDER_DEFERRED",
+					"passes"				: "OVERLAY"
+				},
+
+				// Resolve -> Framebuffer.
+				{
+					"$Class"				: "ScnPostProcessComponent",
+					"rendermask"			: 1,
+					"renderpermutations"	: "RENDER_DEFERRED",
+					"passes"				: "OVERLAY",
+
+					"nodes"					: [
+						{
+							"inputtextures" : {
+								"aResolveTex" : "$(ScnTexture:this.gbuffer_resolve)"
+							},
+
+							"inputsamplers" : {
+								"aResolveTex" : {
+									"addressu" : "clamp",
+									"addressv" : "clamp",
+									"minfilter" : "nearest",
+									"magfilter" : "nearest"
+								}
+							},
+
+							"shader" : "$(ScnShader:pp_shaders.pp_deferred_present)",
+							"renderstate" : {}
+						}
+					]
+				}
+			]
+		},
+
+		/////////////////////////////////////////////////////////////// 
+		// GBuffer
+		{
+			"type" : "ScnTexture",
+			"name" : "gbuffer_albedo",
+			"rendertarget" : true,
+			"width" : 0,
+			"height" : 0,
+			"texturetype" : "tex2d",
+			"format" : "R8G8B8A8"
+		},
+
+		{
+			"type" : "ScnTexture",
+			"name" : "gbuffer_material",
+			"rendertarget" : true,
+			"width" : 0,
+			"height" : 0,
+			"texturetype" : "tex2d",
+			"format" : "R8G8B8A8"
+		},
+
+		{
+			"type" : "ScnTexture",
+			"name" : "gbuffer_normal",
+			"rendertarget" : true,
+			"width" : 0,
+			"height" : 0,
+			"texturetype" : "tex2d",
+			"format" : "R8G8B8A8"
+		},
+
+		{
+			"type" : "ScnTexture",
+			"name" : "gbuffer_velocity",
+			"rendertarget" : true,
+			"width" : 0,
+			"height" : 0,
+			"texturetype" : "tex2d",
+			"format" : "R8G8B8A8"
+		},
+
+		{
+			"type" : "ScnTexture",
+			"name" : "gbuffer_depth",
+			"depthstenciltarget" : true,
+			"width" : 0,
+			"height" : 0,
+			"texturetype" : "tex2d",
+			"format" : "D24S8"
+		},
+
+		{
+			"type" : "ScnTexture",
+			"name" : "gbuffer_resolve",
+			"rendertarget" : true,
+			"width" : 0,
+			"height" : 0,
+			"texturetype" : "tex2d",
+			"format" : "R16FG16FB16FA16F"
+		}		
+	]
+}
