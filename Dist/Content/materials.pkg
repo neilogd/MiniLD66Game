@@ -2,6 +2,56 @@
 	"resources" : [
 		{
 			"type"			: "ScnMaterial",
+			"name"			: "canvasrender",
+
+			// Shader
+			"shader"		: "$(ScnShader:shaders.default)",
+
+			// Textures
+			"textures"		: {
+			},
+
+			// Samplers
+			"samplers"		: {
+			},
+
+			// New render state.
+			"renderstate" : {
+				"blendstate" : {
+					"rendertarget" : [
+						{
+							"enable" : true,
+							"srcblend" : "srcalpha",
+							"destblend" : "invsrcalpha",
+							"blendop" : "add",
+							"srcblendalpha" : "srcalpha",
+							"destblendalpha" : "invsrcalpha",
+							"blendopalpha" : "add",
+							"writemask" : 15
+						}
+					]
+				},
+
+				"depthstencilstate" : {
+					"depthtestenable" : true,
+					"depthwriteenable" : false,
+					"depthfunc" : "less",
+					"stencilenable" : false
+				},
+
+				"rasteriserstate" : {
+					"fillmode" : "solid",
+					"cullmode" : "none",
+					"depthclipenable" : true,
+					"antialiasedlineenable" : true,
+					"depthbias" : 0.0,
+					"slopescaleddepthbias" : 0.0
+				}
+			}
+		},
+
+		{
+			"type"			: "ScnMaterial",
 			"name"			: "debugrender",
 
 			// Shader
@@ -24,8 +74,8 @@
 							"srcblend" : "srcalpha",
 							"destblend" : "invsrcalpha",
 							"blendop" : "add",
-							"srcblendalpha" : "one",
-							"destblendalpha" : "one",
+							"srcblendalpha" : "srcalpha",
+							"destblendalpha" : "invsrcalpha",
 							"blendopalpha" : "add",
 							"writemask" : 15
 						}

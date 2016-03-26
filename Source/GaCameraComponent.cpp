@@ -51,12 +51,10 @@ GaCameraComponent::GaCameraComponent()
 {
 	CameraState_ = STATE_IDLE;
 	NextCameraState_ = STATE_IDLE;
-	CameraDistance_ = 1.0f;
+	CameraDistance_ = 128.0f;
 	CameraZoom_ = 0.0f;
 	MoveFast_ = BcFalse;
-#if PLATFORM_ANDROID
-	CameraRotation_ = MaVec3d( 0.1f, 0.0f, 0.0f );
-#endif
+	CameraRotation_ = MaVec3d( BcPI * 0.4f, 0.0f, 0.0f );
 	CameraWalk_ = MaVec3d( 0.0f, 0.0f, 0.0f );
 }
 
@@ -88,12 +86,14 @@ void GaCameraComponent::preUpdate( BcF32 Tick )
 
 	case STATE_ROTATE:
 		{
+#if 0
 			//OsCore::pImpl()->getClient( 0 )->setMouseLock( BcTrue );
 			BcF32 RotateSpeed = 1.0f / 200.0f;
 			MaVec3d CameraRotateAmount = MaVec3d( 
 				LastMouseEvent_.MouseY_ - InitialMouseEvent_.MouseY_, 
 				-( LastMouseEvent_.MouseX_ - InitialMouseEvent_.MouseX_ ), 0.0f ) * RotateSpeed;
 			CameraRotation_ = BaseCameraRotation_ + CameraRotateAmount;
+#endif 
 		}
 		break;
 
@@ -119,6 +119,9 @@ void GaCameraComponent::preUpdate( BcF32 Tick )
 	BcF32 WalkSpeed = MoveFast_ ? 32.0f : 8.0f;
 	MaMat4d CameraRotationMatrix = getCameraRotationMatrix();
 	MaVec3d OffsetVector = -CameraWalk_ * CameraRotationMatrix;
+
+	OffsetVector.y( 0.0f );
+	OffsetVector.normalise();
 	CameraTarget_ += OffsetVector * Tick * WalkSpeed;
 
 
@@ -233,7 +236,9 @@ MaVec2d GaCameraComponent::getScreenPosition( const MaVec3d& WorldPosition ) con
 {
 	if( SpawnedView_ != nullptr )
 	{
-		return SpawnedView_->getScreenPosition( WorldPosition );
+		auto Client = OsCore::pImpl()->getClient( 0 );
+		auto Size = MaVec2d( Client->getWidth(), Client->getHeight() );
+		return ( ( SpawnedView_->getScreenPosition( WorldPosition ) / ( Size * 0.5f ) ) + MaVec2d( 1.0f, 1.0f ) ) * ( Size * 0.5f );
 	}
 	return MaVec2d( -1.0f, -1.0f );
 }
@@ -324,11 +329,11 @@ eEvtReturn GaCameraComponent::onKeyDown( EvtID ID, const EvtBaseEvent& Event )
 		break;
 	case 'W':
 	case 'w':
-		CameraWalk_.z( 1.0f );
+		CameraWalk_.y( -1.0f );
 		break;
 	case 'S':
 	case 's':
-		CameraWalk_.z( -1.0f );
+		CameraWalk_.y( 1.0f );
 		break;
 	case 'A':
 	case 'a':
@@ -369,7 +374,7 @@ eEvtReturn GaCameraComponent::onKeyUp( EvtID ID, const EvtBaseEvent& Event )
 	case 'w':
 	case 'S':
 	case 's':
-		CameraWalk_.z( 0.0f );
+		CameraWalk_.y( 0.0f );
 		break;
 	case 'A':
 	case 'a':

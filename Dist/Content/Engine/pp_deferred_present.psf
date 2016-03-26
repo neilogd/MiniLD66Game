@@ -36,7 +36,7 @@ PS_MAIN( pixelMain )
 {
 	PS_ENTER;
 	float4 Colour = PSY_SAMPLE_2D( ResolveTex, IN( VsTexCoord0 ).xy );
-	outputFrag[0] = linearToGamma( float4( Colour.xyz, 1.0 ) );
+	outputFrag[0] = linearToGamma( float4( Colour.rgb, Colour.a ) );
 	PS_EXIT;
 }
 

@@ -9,6 +9,7 @@
 #include "System/Scene/ScnCore.h"
 #include "System/Scene/ScnEntity.h"
 
+#include "System/Scene/Rendering/ScnCanvasComponent.h"
 #include "System/Scene/Rendering/ScnDebugRenderComponent.h"
 #include "System/Scene/Rendering/ScnViewComponent.h"
 
@@ -53,6 +54,12 @@ void GaGameComponent::onAttach( ScnEntityWeakRef Parent )
 
 	Camera_ = Parent->getComponentAnyParentByType< ScnEntity >( "CameraEntity" )->getComponentByType< GaCameraComponent >();
 	BcAssert( Camera_ );
+
+	Material_  = Parent->getComponentAnyParentByType< ScnMaterialComponent >();
+	BcAssert( Material_  );
+
+	Canvas_  = Parent->getComponentAnyParentByType< ScnCanvasComponent >();
+	BcAssert( Canvas_ );
 
 	TickRate_ = GaReal( 1.0f ) / GaReal( TickHz_ );
 	TickAccumulator_ = TickRate_;
@@ -142,7 +149,7 @@ void GaGameComponent::onAttach( ScnEntityWeakRef Parent )
 						if( ( A - B ).magnitude() > 12.0f )
 						{
 							InputState_ = InputState::DRAGGING;
-							onBeginDrag( Event );
+							onBeginDrag( BeginDragMouseEvent_ );
 						}
 					}				
 					break;
@@ -186,7 +193,26 @@ void GaGameComponent::onEndDrag( OsEventInputMouse Event )
 	SelectionBoxB_ = MaVec2d( Event.MouseX_, Event.MouseY_ );
 	SelectionBoxEnable_ = BcFalse;
 
-	// Do selection.
+	SelectedUnitIDs_.clear();
+
+	// Do selection. Use centre points of units, rather than frustum (do that later maybe?)
+	// Check for unit.
+	for( auto* Unit : Units_ )
+	{
+		auto ScreenPos = Camera_->getScreenPosition( Unit->getParentEntity()->getWorldPosition() );
+		auto A = MaVec2d( 
+			std::min( SelectionBoxA_.x(), SelectionBoxB_.x() ),
+			std::min( SelectionBoxA_.y(), SelectionBoxB_.y() ) );
+		auto B = MaVec2d( 
+			std::max( SelectionBoxA_.x(), SelectionBoxB_.x() ),
+			std::max( SelectionBoxA_.y(), SelectionBoxB_.y() ) );		
+
+		if( ScreenPos.x() > A.x() && ScreenPos.y() > A.y() && 
+			ScreenPos.x() < B.x() && ScreenPos.y() < B.y() )
+		{
+			SelectedUnitIDs_.push_back( Unit->getID() );
+		}
+	}
 }
 
 
@@ -234,14 +260,36 @@ void GaGameComponent::onClick( OsEventInputMouse Event )
 		MaVec3d Intersection;
 		if( GroundPlane.lineIntersection( NearPos, FarPos, Distance, Intersection ) )
 		{
-			// Send all units to this position.
-			// Draw selection (debug).
+			// Find midpoint.
+			GaVec3d Midpoint( 0.0f, 0.0f, 0.0f );
+			GaReal NoofUnits = 0;
 			for( auto UnitID : SelectedUnitIDs_ )
 			{
 				auto* Unit = getUnit( UnitID );
 				if( Unit )
 				{
-					Unit->commandMove( GaVec3d( Intersection.x(), Intersection.y(), Intersection.z() ) );
+					Midpoint += Unit->getState().Position_;
+					NoofUnits += 1.0f;
+				}
+			}
+
+			if( NoofUnits > 0.0f )
+			{
+				Midpoint /= NoofUnits;
+
+				// TODO: Position them in formation.
+			
+				// Send all units to offsets around this position.
+				for( auto UnitID : SelectedUnitIDs_ )
+				{
+					auto* Unit = getUnit( UnitID );
+					if( Unit )
+					{
+						auto Centre = GaVec3d( Intersection.x(), Intersection.y(), Intersection.z() );
+						auto MovePosition = ( Unit->getState().Position_ - Midpoint ) + Centre;
+
+						Unit->commandMove( MovePosition );
+					}
 				}
 			}
 		}
@@ -351,6 +399,16 @@ void GaGameComponent::update( BcF32 Tick )
 			DebugRender->drawLine( Position, Position + Velocity, RsColour::GREEN, 0 );
 			DebugRender->drawEllipsoid( Position, MaVec3d( 0.51f, 0.51f, 0.51f ), RsColour::GREEN, 0 );
 #endif
+		}
+	}
+
+	// 2D HUD stuff.
+	{
+		if( SelectionBoxEnable_ )
+		{
+			Canvas_->setMaterialComponent( Material_ );
+			Canvas_->drawBox( SelectionBoxA_, SelectionBoxB_, RsColour( 0.0f, 1.0f, 0.0f, 0.1f ) );
+			Canvas_->drawLineBox( SelectionBoxA_, SelectionBoxB_, RsColour( 0.0f, 1.0f, 0.0f, 1.0f ) );
 		}
 	}
 

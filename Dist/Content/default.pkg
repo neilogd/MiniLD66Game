@@ -6,10 +6,27 @@
 
 			"components" : [
 				{
-					"$Class"				: "ScnDebugRenderComponent",
-					"noofvertices"			: 65536,
-					"material"				: "$(ScnMaterial:materials.debugrender)",
-					"rendermask"			: 3
+					"$Class" : "ScnDebugRenderComponent",
+					"noofvertices" : 65536,
+					"material" : "$(ScnMaterial:materials.debugrender)",
+					"rendermask" : 3
+				},
+
+				{
+					"$Class" : "ScnMaterialComponent",
+					"material" : "$(ScnMaterial:materials.canvasrender)",
+					"permutationflags" : "mesh_static_2d"
+				},
+
+				{
+					"$Class" : "ScnCanvasComponent",
+					"noofvertices" : 8192,
+					"rendermask" : 1,
+					"clear" : true,
+					"left" : 0.0,
+					"right" : 1.0,
+					"top" : 0.0,
+					"bottom" : 1.0
 				},
 
 				{

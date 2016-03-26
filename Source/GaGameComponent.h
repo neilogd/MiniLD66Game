@@ -46,6 +46,8 @@ private:
 	std::vector< class GaUnitComponent* > PendingDeregisterUnits_;
 
 	class GaCameraComponent* Camera_;
+	class ScnMaterialComponent* Material_;
+	class ScnCanvasComponent* Canvas_;
 
 	std::vector< BcU32 > SelectedUnitIDs_;
 
