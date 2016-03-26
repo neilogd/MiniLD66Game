@@ -137,6 +137,7 @@ void GaCameraComponent::preUpdate( BcF32 Tick )
 	// clear event.
 	BcMemZero( &LastMouseEvent_, sizeof( LastMouseEvent_ ) );
 
+#if 0
 	if ( ImGui::Begin( "Test Menu" ) )
 	{
 		ImGui::BeginGroup();
@@ -158,6 +159,7 @@ void GaCameraComponent::preUpdate( BcF32 Tick )
 		ImGui::EndGroup();
 	}
 	ImGui::End();
+#endif
 
 	if( Renderers_.size() > 0 && ( SpawnedRenderer_ == nullptr || SpawnedRenderer_->getBasis() != Renderers_[ SelectedRenderer_ ] ) )
 	{

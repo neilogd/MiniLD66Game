@@ -35,12 +35,9 @@
 					"components" : [
 						{
 							"$Class" : "GaGameComponent",
-							"tickhz" : 15
-						},
+							"tickhz" : 5,
 
-						{
-							"$Class" : "ScnModelComponent",
-							"model" : "$(ScnModel:models.sphere)"
+							"testentity" : "$(ScnEntity:test_units.TestUnit_0)"
 						}
 					]
 				}

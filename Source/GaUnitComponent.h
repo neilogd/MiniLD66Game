@@ -30,6 +30,8 @@ public:
 	GaUnitState getState() const { return PrevState_; }
 	GaUnitState getInterpolatedState( GaReal Alpha ) const;
 
+	void commandMove( GaVec3d MovePosition );
+
 private:
 	class GaGameComponent* GameComponent_;
 	BcS32 MaxHealth_ = 100;
@@ -40,8 +42,6 @@ private:
 	
 	// Movement.
 	GaVec3d MovePosition_;
-
-	// Attacking.
 
 	
 };

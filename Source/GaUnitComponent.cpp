@@ -77,7 +77,7 @@ void GaUnitComponent::update( GaReal Tick )
 		CurrState_.Velocity_ = CurrState_.Velocity_ + CurrState_.Acceleration_ * Tick;
 
 		// Check if we need to move.
-		if( ( MovePosition_ - CurrState_.Position_ ).magnitudeSquared() > GaReal( 0.1f ) )
+		if( ( MovePosition_ - CurrState_.Position_ ).magnitudeSquared() > GaReal( 0.001f ) )
 		{
 			CurrState_.Velocity_ = ( MovePosition_ - CurrState_.Position_ ).normal() * MaxVelocity_;
 
@@ -102,4 +102,10 @@ GaUnitState GaUnitComponent::getInterpolatedState( GaReal Alpha ) const
 	State.Velocity_.lerp( PrevState_.Velocity_, CurrState_.Velocity_, Alpha );
 	State.Acceleration_.lerp( PrevState_.Acceleration_, CurrState_.Acceleration_, Alpha );
 	return State;
+}
+
+
+void GaUnitComponent::commandMove( GaVec3d MovePosition )
+{
+	MovePosition_ = MovePosition;
 }

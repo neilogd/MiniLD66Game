@@ -26,9 +26,12 @@ private:
 	GaReal TickRate_ = 0.0f;
 	GaReal TickAccumulator_ = 0.0f;
 
+	ScnEntity* TestEntity_ = nullptr;
+
 	std::vector< class GaUnitComponent* > Units_;
 	std::vector< class GaUnitComponent* > PendingRegisterUnits_;
 	std::vector< class GaUnitComponent* > PendingDeregisterUnits_;
+
 
 
 };
