@@ -6,6 +6,13 @@
 
 			"components" : [
 				{
+					"$Class"				: "ScnDebugRenderComponent",
+					"noofvertices"			: 65536,
+					"material"				: "$(ScnMaterial:materials.debugrender)",
+					"rendermask"			: 3
+				},
+
+				{
 					"$Class" : "ScnEntity",
 					"name" : "CameraEntity",
 

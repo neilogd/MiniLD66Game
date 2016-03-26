@@ -8,6 +8,8 @@
 #include "System/Scene/ScnCore.h"
 #include "System/Scene/ScnEntity.h"
 
+#include "System/Scene/Rendering/ScnDebugRenderComponent.h"
+
 REFLECTION_DEFINE_DERIVED( GaGameComponent );
 
 void GaGameComponent::StaticRegisterClass()
@@ -123,6 +125,13 @@ void GaGameComponent::update( BcF32 Tick )
 		PendingDeregisterUnits_.clear();
 	}
 
+#if !PSY_PRODUCTION
+	auto DebugRender = ScnDebugRenderComponent::pImpl();
+	BcAssert( DebugRender );
+
+	DebugRender->drawGrid( MaVec3d( 0.0f, 0.0f, 0.0f ), MaVec3d( 1000.0f, 0.0f, 1000.0f ), 1.0f, 10.0f );
+#endif
+
 	// Rendering.
 	const BcF32 Alpha = InterpolatedRender ? TickAccumulator_ / TickRate_ : 0;
 	for( auto* Unit : Units_ )
@@ -132,7 +141,14 @@ void GaGameComponent::update( BcF32 Tick )
 		MaVec3d Position( State.Position_.x(), State.Position_.y(), State.Position_.z() );
 
 		Unit->getParentEntity()->setLocalPosition( Position );
+
+		// Debug rendering.
+#if !PSY_PRODUCTION
+		
+#endif
 	}
+
+	
 
 }
 
