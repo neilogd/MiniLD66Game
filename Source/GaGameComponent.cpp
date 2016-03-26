@@ -41,6 +41,7 @@ void GaGameComponent::onAttach( ScnEntityWeakRef Parent )
 	Super::onAttach( Parent );
 
 	TickRate_ = GaReal( 1.0f ) / GaReal( TickHz_ );
+	TickAccumulator_ = TickRate_;
 }
 
 
@@ -52,10 +53,11 @@ void GaGameComponent::onDetach( ScnEntityWeakRef Parent )
 
 void GaGameComponent::update( BcF32 Tick )
 {
-	TickAccumulator_ -= Tick;
-	if( TickAccumulator_ < 0.0f )
+	// Simulation.
+	TickAccumulator_ += Tick;
+	while( TickAccumulator_ >= TickRate_ )
 	{
-		TickAccumulator_ += TickRate_;
+		TickAccumulator_ -= TickRate_;
 
 		// Add all pending units.
 		for( auto* Unit : PendingRegisterUnits_ )
@@ -63,6 +65,12 @@ void GaGameComponent::update( BcF32 Tick )
 			Units_.push_back( Unit );
 		}
 		PendingRegisterUnits_.clear();
+
+		// Update unit state.
+		for( auto* Unit : Units_ )
+		{
+			Unit->updateState();
+		}
 
 		// Update units.
 		for( auto* Unit : Units_ )
@@ -81,6 +89,18 @@ void GaGameComponent::update( BcF32 Tick )
 		}
 		PendingDeregisterUnits_.clear();
 	}
+
+	// Rendering.
+	const BcF32 Alpha = TickAccumulator_ / TickRate_;
+	for( auto* Unit : Units_ )
+	{
+		GaUnitState State = Unit->getInterpolatedState( Alpha );
+
+		MaVec3d Position( State.Position_.x(), State.Position_.y(), State.Position_.z() );
+
+		Unit->getParentEntity()->setLocalPosition( Position );
+	}
+
 }
 
 void GaGameComponent::registerUnit( class GaUnitComponent* Unit )

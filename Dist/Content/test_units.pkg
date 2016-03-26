@@ -1,0 +1,21 @@
+{
+	"resources" : [
+		{
+			"name"		:		"TestUnit_0",
+			"type"		:		"ScnEntity",
+
+			"components" : [
+				{
+					"$Class" : "GaUnitComponent",
+					"maxhealth" : 100,
+					"maxvelocity" : 10				
+				},
+
+				{
+					"$Class" : "ScnModelComponent",
+					"model" : "$(ScnModel:models.sphere)"
+				}
+			]
+		}
+	]
+}
