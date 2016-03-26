@@ -1,0 +1,3 @@
+[submodule "Psybrus"]
+	path = Psybrus
+	url = https://github.com/Psybrus/Psybrus
