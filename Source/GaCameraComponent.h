@@ -39,6 +39,9 @@ public:
 	void onAttach( ScnEntityWeakRef Parent ) override;
 	void onDetach( ScnEntityWeakRef Parent ) override;
 
+	void getWorldPosition( const MaVec2d& ScreenPosition, MaVec3d& Near, MaVec3d& Far ) const;
+	MaVec2d getScreenPosition( const MaVec3d& WorldPosition ) const;
+
 	eEvtReturn onMouseDown( EvtID ID, const EvtBaseEvent& Event );
 	eEvtReturn onMouseUp( EvtID ID, const EvtBaseEvent& Event );
 	eEvtReturn onMouseMove( EvtID ID, const EvtBaseEvent& Event );
@@ -76,6 +79,7 @@ private:
 	int SelectedRenderer_ = 0;
 	std::vector< ScnEntityRef > Renderers_;
 	ScnEntityRef SpawnedRenderer_;
+	class ScnViewComponent* SpawnedView_ = nullptr;
 };
 
 #endif

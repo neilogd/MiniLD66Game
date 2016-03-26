@@ -35,7 +35,7 @@
 				"depthstencilstate" : {
 					"depthtestenable" : true,
 					"depthwriteenable" : false,
-					"depthfunc" : "lessequal",
+					"depthfunc" : "less",
 					"stencilenable" : false
 				},
 
@@ -44,7 +44,7 @@
 					"cullmode" : "none",
 					"depthclipenable" : true,
 					"antialiasedlineenable" : true,
-					"depthbias" : 1.0,
+					"depthbias" : 0.0,
 					"slopescaleddepthbias" : 0.0
 				}
 			}

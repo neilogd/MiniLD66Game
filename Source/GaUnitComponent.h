@@ -30,12 +30,17 @@ public:
 	GaUnitState getState() const { return PrevState_; }
 	GaUnitState getInterpolatedState( GaReal Alpha ) const;
 
+	void setID( BcU32 ID ) { ID_ = ID; }
+	BcU32 getID() const { return ID_; }
+
 	void commandMove( GaVec3d MovePosition );
 
 private:
 	class GaGameComponent* GameComponent_;
 	BcS32 MaxHealth_ = 100;
 	BcS32 MaxVelocity_ = 1;
+
+	BcU32 ID_ = BcErrorCode;
 
 	GaUnitState CurrState_;
 	GaUnitState PrevState_;

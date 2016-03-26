@@ -8,12 +8,14 @@
 				{
 					"$Class" : "GaUnitComponent",
 					"maxhealth" : 100,
-					"maxvelocity" : 10				
+					"maxvelocity" : 10
 				},
 
 				{
 					"$Class" : "ScnModelComponent",
-					"model" : "$(ScnModel:models.sphere)"
+					"model" : "$(ScnModel:models.sphere)",
+
+					"scale" : "0.5, 0.5, 0.5"
 				}
 			]
 		}

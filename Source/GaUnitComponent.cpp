@@ -12,7 +12,7 @@ void GaUnitComponent::StaticRegisterClass()
 	ReField* Fields[] = 
 	{
 		new ReField( "MaxHealth_", &GaUnitComponent::MaxHealth_, bcRFF_IMPORTER ),
-		new ReField( "MaxVelocity_", &GaUnitComponent::MaxHealth_, bcRFF_IMPORTER ),
+		new ReField( "MaxVelocity_", &GaUnitComponent::MaxVelocity_, bcRFF_IMPORTER ),
 		
 	};
 
@@ -72,16 +72,25 @@ void GaUnitComponent::update( GaReal Tick )
 
 	// Do movement.
 	{
-		// Euler integration. Inaccuracy doesn't concern me for this game.
-		CurrState_.Position_ = CurrState_.Position_ + CurrState_.Velocity_ * Tick;
-		CurrState_.Velocity_ = CurrState_.Velocity_ + CurrState_.Acceleration_ * Tick;
-
-		// Check if we need to move.
-		if( ( MovePosition_ - CurrState_.Position_ ).magnitudeSquared() > GaReal( 0.001f ) )
+		const auto DistanceRemaining = ( MovePosition_ - CurrState_.Position_ ).magnitude();
+		if( DistanceRemaining > 0.0f )
 		{
-			CurrState_.Velocity_ = ( MovePosition_ - CurrState_.Position_ ).normal() * MaxVelocity_;
+			auto MoveVector = CurrState_.Velocity_ * Tick;
+			if( MoveVector.magnitude() > DistanceRemaining )
+			{
+				// Clamp to final position and reset velocity + acceleration.
+				CurrState_.Position_ = MovePosition_;
+				CurrState_.Velocity_ = GaVec3d( 0.0f, 0.0f, 0.0f );
+				CurrState_.Acceleration_ = GaVec3d( 0.0f, 0.0f, 0.0f );
+			}
+			else
+			{
+				// Euler integration. Inaccuracy doesn't concern me for this game.
+				CurrState_.Position_ = CurrState_.Position_ + MoveVector;
+				CurrState_.Velocity_ = CurrState_.Velocity_ + CurrState_.Acceleration_ * Tick;
 
-			// TODO: Acceleration.
+				CurrState_.Velocity_ = ( MovePosition_ - CurrState_.Position_ ).normal() * MaxVelocity_;
+			}
 		}
 		else
 		{

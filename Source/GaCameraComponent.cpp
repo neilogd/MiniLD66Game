@@ -15,6 +15,7 @@
 
 #include "System/Debug/DsImGui.h"
 #include "System/Os/OsCore.h"
+#include "System/Scene/Rendering/ScnViewComponent.h"
 
 #include "Base/BcMath.h"
 
@@ -173,6 +174,7 @@ void GaCameraComponent::preUpdate( BcF32 Tick )
 			MaMat4d(),
 			getParentEntity() );
 		SpawnedRenderer_ = ScnCore::pImpl()->spawnEntity( SpawnEntity );
+		SpawnedView_ = SpawnedRenderer_->getComponentByType< ScnViewComponent >();
 	}
 }
 
@@ -213,6 +215,27 @@ void GaCameraComponent::onDetach( ScnEntityWeakRef Parent )
 	Super::onDetach( Parent );
 
 	OsCore::pImpl()->unsubscribeAll( this );
+}
+
+//////////////////////////////////////////////////////////////////////////
+// getWorldPosition
+void GaCameraComponent::getWorldPosition( const MaVec2d& ScreenPosition, MaVec3d& Near, MaVec3d& Far ) const
+{
+	if( SpawnedView_ != nullptr )
+	{
+		SpawnedView_->getWorldPosition( ScreenPosition, Near, Far );
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+// getScreenPosition
+MaVec2d GaCameraComponent::getScreenPosition( const MaVec3d& WorldPosition ) const
+{
+	if( SpawnedView_ != nullptr )
+	{
+		return SpawnedView_->getScreenPosition( WorldPosition );
+	}
+	return MaVec2d( -1.0f, -1.0f );
 }
 
 //////////////////////////////////////////////////////////////////////////
