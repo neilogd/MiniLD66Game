@@ -12,8 +12,22 @@
 					"behaviours" : [
 						{
 							"name" : "default",
+							
+							// Move.
 							"maxvelocity" : 10,
+							
+							// Attack.
+							"rateoffire" : 1,
+							"attackprojectile" : "$(ScnEntity:projectile_units.ProjectileUnit_0)",
+
+
 							"commands" : [
+								{
+									"name" : "[S]top",
+									"key" : "S",
+									"type" : "STOP"
+								},
+
 								{
 									"name" : "Mov[E]",
 									"key" : "E",
@@ -27,18 +41,31 @@
 								},
 
 								{
-									"name" : "Morph into [D]efense",
-									"key" : "D",
+									"name" : "Mo[R]ph into Defence",
+									"key" : "R",
 									"type" : "BEHAVIOUR",
-									"behaviour" : "defense"
+									"behaviour" : "defence"
 								}
 							]
 						},
 					
 						{
-							"name" : "defense",
+							"name" : "defence",
+
+							// Move.
 							"maxvelocity" : 0,
+
+							// Attack.
+							"rateoffire" : 5,
+							"attackprojectile" : "$(ScnEntity:projectile_units.ProjectileUnit_0)",
+
 							"commands" : [
+								{
+									"name" : "[S]top",
+									"key" : "S",
+									"type" : "STOP"
+								},
+
 								{
 									"name" : "[A]ttack",
 									"key" : "A",
@@ -46,8 +73,8 @@
 								},
 
 								{
-									"name" : "Morph into [D]efault",
-									"key" : "D",
+									"name" : "Mo[R]ph into Offfence",
+									"key" : "R",
 									"type" : "BEHAVIOUR",
 									"behaviour" : "default"
 								}
@@ -80,6 +107,12 @@
 							"maxvelocity" : 10,
 							"commands" : [
 								{
+									"name" : "[S]top",
+									"key" : "S",
+									"type" : "STOP"
+								},
+
+								{
 									"name" : "Mov[E]",
 									"key" : "E",
 									"type" : "MOVE"
@@ -87,8 +120,8 @@
 
 							
 								{
-									"name" : "Morph into [F]uck yeah",
-									"key" : "F",
+									"name" : "Mo[R]ph into Fuck Yeah",
+									"key" : "R",
 									"type" : "BEHAVIOUR",
 									"behaviour" : "default"
 								}

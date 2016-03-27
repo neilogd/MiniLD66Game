@@ -658,8 +658,8 @@ void GaGameComponent::selectCommand( const GaUnitCommand& Command )
 {
 	SelectedCommand_ = Command;
 
-	// Behaviour commands are immediate.
-	if( Command.Type_ == GaUnitCommandType::BEHAVIOUR )
+	// Stop & behaviour commands are immediate.
+	if( Command.Type_ == GaUnitCommandType::STOP || Command.Type_ == GaUnitCommandType::BEHAVIOUR )
 	{
 		command( Command );
 		rebuildCommands();

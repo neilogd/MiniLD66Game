@@ -1,0 +1,29 @@
+{
+	"resources" : [
+		{
+			"name"		:		"ProjectileUnit_0",
+			"type"		:		"ScnEntity",
+
+			"components" : [
+				{
+					"$Class" : "GaUnitComponent",
+					"maxhealth" : 100,
+
+					"behaviours" : [
+						{
+							"name" : "default",
+							"maxvelocity" : 10
+						}
+					]
+				},
+
+				{
+					"$Class" : "ScnModelComponent",
+					"model" : "$(ScnModel:models.sphere)",
+
+					"scale" : "0.05, 0.05, 0.05"
+				}
+			]
+		}
+	]
+}

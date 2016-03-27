@@ -20,6 +20,8 @@ enum class GaUnitCommandType
 	INVALID,
 	/// Move to target unit/location.
 	MOVE,
+	/// Stop all activity..
+	STOP,
 	/// Attack target unit/location.
 	ATTACK,
 	/// Change unit behaviour state.
@@ -96,8 +98,15 @@ public:
 	GaUnitBehaviour(){}
 	/// Name.
 	std::string Name_;
+	
 	/// Max velocity.
 	BcS32 MaxVelocity_ = 1;
+
+	/// Rate of fire in projectiles/sec.
+	BcS32 RateOfFire_ = 1;
+	
+	/// Attack projectile.
+	ScnEntity* AttackProjectile_ = nullptr;
 
 	/// Valid commands.
 	std::vector< GaUnitCommand > Commands_;

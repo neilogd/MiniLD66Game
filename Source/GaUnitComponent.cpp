@@ -28,6 +28,7 @@ void GaUnitCommand::StaticRegisterClass()
 	ReEnumConstant* GaUnitCommandTypeEnumConstants[] = 
 	{
 		new ReEnumConstant( "MOVE", GaUnitCommandType::MOVE ),
+		new ReEnumConstant( "STOP", GaUnitCommandType::STOP ),
 		new ReEnumConstant( "ATTACK", GaUnitCommandType::ATTACK ),
 		new ReEnumConstant( "BEHAVIOUR", GaUnitCommandType::BEHAVIOUR )
 	};
@@ -43,6 +44,8 @@ void GaUnitBehaviour::StaticRegisterClass()
 	{
 		new ReField( "Name_", &GaUnitBehaviour::Name_, bcRFF_IMPORTER ),
 		new ReField( "MaxVelocity_", &GaUnitBehaviour::MaxVelocity_, bcRFF_IMPORTER ),
+		new ReField( "RateOfFire_", &GaUnitBehaviour::RateOfFire_, bcRFF_IMPORTER ),
+		new ReField( "AttackProjectile_", &GaUnitBehaviour::AttackProjectile_, bcRFF_IMPORTER | bcRFF_SHALLOW_COPY ),
 		new ReField( "Commands_", &GaUnitBehaviour::Commands_, bcRFF_IMPORTER ),
 	};
 
@@ -218,6 +221,9 @@ void GaUnitComponent::command( const GaUnitCommand& InCommand )
 					BcBreakpoint;
 				}
 				break;
+			case GaUnitCommandType::STOP:
+				MovePosition_ = CurrState_.Position_;
+				break;
 			case GaUnitCommandType::ATTACK:
 				PSY_LOG( "Unimplemented" );
 				break;
@@ -227,6 +233,7 @@ void GaUnitComponent::command( const GaUnitCommand& InCommand )
 					if( InCommand.Behaviour_ == Behaviour->Name_ )
 					{
 						CurrBehaviour_ = Behaviour;
+
 						return;
 					}
 				}
