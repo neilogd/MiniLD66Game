@@ -99,14 +99,30 @@ public:
 	/// Name.
 	std::string Name_;
 	
+	////////////////////////////////////
+	// Move stuff.
+
 	/// Max velocity.
 	BcS32 MaxVelocity_ = 1;
+
+	/// Destroy at end of move.
+	BcBool DestroyAtEndOfMove_ = BcFalse;
+
+	/// End move damage.
+	BcS32 EndMoveDamage_ = 0;
+
+	/// End move damage radius.
+	BcS32 EndMoveDamageRadius_ = 0;
+
+	////////////////////////////////////
+	// Attack stuff.
 
 	/// Rate of fire in projectiles/sec.
 	BcS32 RateOfFire_ = 1;
 	
 	/// Attack projectile.
 	ScnEntity* AttackProjectile_ = nullptr;
+
 
 	/// Valid commands.
 	std::vector< GaUnitCommand > Commands_;
@@ -146,6 +162,7 @@ public:
 
 	BcU32 getID() const { return ID_; }
 	BcU32 getTeamID() const { return TeamID_; }
+	BcBool isSelectable() const { return Selectable_; }
 
 	void command( const GaUnitCommand& InCommand );
 
@@ -153,6 +170,8 @@ private:
 	class GaGameComponent* GameComponent_ = nullptr;
 
 	BcS32 MaxHealth_ = 100;
+
+	BcBool Selectable_ = BcTrue;
 
 	BcBool DeleteBehaviour_ = BcFalse;
 	std::vector< GaUnitBehaviour* > Behaviours_;
@@ -168,10 +187,13 @@ private:
 	GaUnitState PrevState_;
 		
 	// Movement commands.
-	GaVec3d MovePosition_;
-	BcU32 MoveUnitID_;
+	GaVec3d MoveLocation_;
+	BcU32 MoveUnitID_ = BcErrorCode;
 
 	// Attack commands.
+	GaVec3d AttackLocation_;
+	BcU32 AttackUnitID_ = BcErrorCode;
+	GaReal AttackTimer_ = 0.0f;
 
 
 	BcU32 ID_ = BcErrorCode;

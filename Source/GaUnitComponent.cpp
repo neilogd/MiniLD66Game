@@ -3,6 +3,7 @@
 #include "GaGameComponent.h"
 
 #include "System/Scene/ScnComponentProcessor.h"
+#include "System/Scene/ScnCore.h"
 #include "System/Scene/ScnEntity.h"
 
 #include "System/Scene/Rendering/ScnModel.h"
@@ -44,6 +45,9 @@ void GaUnitBehaviour::StaticRegisterClass()
 	{
 		new ReField( "Name_", &GaUnitBehaviour::Name_, bcRFF_IMPORTER ),
 		new ReField( "MaxVelocity_", &GaUnitBehaviour::MaxVelocity_, bcRFF_IMPORTER ),
+		new ReField( "DestroyAtEndOfMove_", &GaUnitBehaviour::DestroyAtEndOfMove_, bcRFF_IMPORTER ),
+		new ReField( "EndMoveDamage_", &GaUnitBehaviour::EndMoveDamage_, bcRFF_IMPORTER ),
+		new ReField( "EndMoveDamageRadius_", &GaUnitBehaviour::EndMoveDamageRadius_, bcRFF_IMPORTER ),
 		new ReField( "RateOfFire_", &GaUnitBehaviour::RateOfFire_, bcRFF_IMPORTER ),
 		new ReField( "AttackProjectile_", &GaUnitBehaviour::AttackProjectile_, bcRFF_IMPORTER | bcRFF_SHALLOW_COPY ),
 		new ReField( "Commands_", &GaUnitBehaviour::Commands_, bcRFF_IMPORTER ),
@@ -61,6 +65,7 @@ void GaUnitComponent::StaticRegisterClass()
 	ReField* Fields[] = 
 	{
 		new ReField( "MaxHealth_", &GaUnitComponent::MaxHealth_, bcRFF_IMPORTER ),
+		new ReField( "Selectable_", &GaUnitComponent::Selectable_, bcRFF_IMPORTER ),
 		new ReField( "Behaviours_", &GaUnitComponent::Behaviours_, bcRFF_IMPORTER | bcRFF_SHALLOW_COPY ),
 	};
 
@@ -119,10 +124,11 @@ void GaUnitComponent::setupUnit( GaGameComponent* Game, BcU32 ID, BcU32 TeamID, 
 	CurrBehaviour_ = Behaviours_[ 0 ];
 	
 	// Team colours hack.
-	std::array< RsColour, 2 > TeamColour =  
+	std::array< RsColour, 3 > TeamColour =  
 	{
 		RsColour::RED,
 		RsColour::BLUE,
+		RsColour::GREEN,
 	};
 
 	auto Model = getComponentByType< ScnModelComponent >();
@@ -137,6 +143,9 @@ void GaUnitComponent::setupUnit( GaGameComponent* Game, BcU32 ID, BcU32 TeamID, 
 void GaUnitComponent::destroyUnit()
 {
 	updateState();
+
+	// TODO: Possibly keep round for graphics stuff.
+	ScnCore::pImpl()->removeEntity( getParentEntity() );
 }
 
 
@@ -151,9 +160,53 @@ void GaUnitComponent::update( GaReal Tick )
 	BcAssert( CurrBehaviour_ );
 
 	// Do behaviour related stuff.
-	// Always use the prev state.
 	{
 		
+	}
+
+	// Do attack.
+	{
+		if( CurrBehaviour_->AttackProjectile_ )
+		{
+			// Always handle attack timing, not just when firing.
+			GaReal AttackTime = GaReal( 1.0f ) / GaReal( CurrBehaviour_->RateOfFire_ );
+			if( AttackTimer_ < AttackTime )
+			{
+				AttackTimer_ += Tick;
+			}
+	
+			if( AttackUnitID_ != BcErrorCode )
+			{
+				auto Unit = GameComponent_->getUnit( AttackUnitID_ );
+				if( Unit )
+				{
+					while( AttackTimer_ >= AttackTime )
+					{
+						AttackTimer_ -= AttackTime;
+
+						// Launch projectile.
+						auto Projectile = GameComponent_->spawnUnit( CurrBehaviour_->AttackProjectile_, 2, PrevState_.Position_ );
+
+						// First target at time guess.
+						GaVec3d TargetAtTime = Unit->PrevState_.Position_;
+
+						// Calculate rough time to target.
+						GaReal TimeToTarget = ( PrevState_.Position_ - TargetAtTime ).magnitude() / GaReal( Projectile->CurrBehaviour_->MaxVelocity_ );
+						
+						// Calculate rough end point of target at that time.
+						TargetAtTime = Unit->PrevState_.Position_ + Unit->PrevState_.Velocity_ * TimeToTarget;
+					
+						// Immediately command.
+						Projectile->command( GaUnitCommand( GaUnitCommandType::MOVE, TargetAtTime ) );
+										
+					}
+				}
+				else
+				{
+					AttackUnitID_ = BcErrorCode;
+				}
+			}
+		}
 	}
 
 	// Do movement.
@@ -163,23 +216,34 @@ void GaUnitComponent::update( GaReal Tick )
 			auto Unit = GameComponent_->getUnit( MoveUnitID_ );
 			if( Unit )
 			{
-				MovePosition_ = Unit->getState().Position_;
+				MoveLocation_ = Unit->getState().Position_;
 			}
 			else
 			{
 				command( GaUnitCommand( GaUnitCommandType::STOP, BcErrorCode ) );
 			}
 		}
-		const auto DistanceRemaining = ( MovePosition_ - CurrState_.Position_ ).magnitude();
+		const auto DistanceRemaining = ( MoveLocation_ - CurrState_.Position_ ).magnitude();
 		if( DistanceRemaining > 0.0f )
 		{
 			auto MoveVector = CurrState_.Velocity_ * Tick;
 			if( MoveVector.magnitude() > DistanceRemaining )
 			{
-				CurrState_.Position_ = MovePosition_;
+				CurrState_.Position_ = MoveLocation_;
 				if( MoveUnitID_ == BcErrorCode )
 				{
 					command( GaUnitCommand( GaUnitCommandType::STOP, BcErrorCode ) );
+
+					/// END OF MOVE DEATH!
+					if( CurrBehaviour_->DestroyAtEndOfMove_ )
+					{
+						GameComponent_->destroyUnit( ID_ );
+					}
+
+					if( CurrBehaviour_->EndMoveDamage_ > 0 )
+					{
+						// DO DAMAGE TO STUFF IN AREA.
+					}
 				}
 			}
 			else
@@ -188,14 +252,28 @@ void GaUnitComponent::update( GaReal Tick )
 				CurrState_.Position_ = CurrState_.Position_ + MoveVector;
 				CurrState_.Velocity_ = CurrState_.Velocity_ + CurrState_.Acceleration_ * Tick;
 
-				CurrState_.Velocity_ = ( MovePosition_ - CurrState_.Position_ ).normal() * CurrBehaviour_->MaxVelocity_;
+				CurrState_.Velocity_ = ( MoveLocation_ - CurrState_.Position_ ).normal() * CurrBehaviour_->MaxVelocity_;
 			}
 		}
 		else
 		{
 			if( MoveUnitID_ == BcErrorCode )
 			{
-				command( GaUnitCommand( GaUnitCommandType::STOP, BcErrorCode ) );
+				MoveLocation_ = CurrState_.Position_;
+				MoveUnitID_ = BcErrorCode;
+				CurrState_.Velocity_ = GaVec3d( 0.0f, 0.0f, 0.0f );
+				CurrState_.Acceleration_ = GaVec3d( 0.0f, 0.0f, 0.0f );
+
+				/// END OF MOVE DEATH!
+				if( CurrBehaviour_->DestroyAtEndOfMove_ )
+				{
+					GameComponent_->destroyUnit( ID_ );
+				}
+
+				if( CurrBehaviour_->EndMoveDamage_ > 0 )
+				{
+					// DO DAMAGE TO STUFF IN AREA.
+				}
 			}
 		}
 	}
@@ -224,19 +302,19 @@ void GaUnitComponent::command( const GaUnitCommand& InCommand )
 			{
 			case GaUnitCommandType::MOVE:
 				MoveUnitID_ = InCommand.UnitID_;
-				MovePosition_ = InCommand.Location_;
+				MoveLocation_ = InCommand.Location_;
 				break;
 			case GaUnitCommandType::STOP:
 				{
-					MovePosition_ = CurrState_.Position_;
+					MoveLocation_ = CurrState_.Position_;
 					MoveUnitID_ = BcErrorCode;
+					AttackUnitID_ = BcErrorCode;
 					CurrState_.Velocity_ = GaVec3d( 0.0f, 0.0f, 0.0f );
 					CurrState_.Acceleration_ = GaVec3d( 0.0f, 0.0f, 0.0f );
 				}
-				
 				break;
 			case GaUnitCommandType::ATTACK:
-				PSY_LOG( "Unimplemented" );
+				AttackUnitID_ = InCommand.UnitID_;
 				break;
 			case GaUnitCommandType::BEHAVIOUR:
 				for( const auto& Behaviour : Behaviours_ )

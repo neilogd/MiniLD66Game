@@ -15,6 +15,7 @@
 
 #include "System/Os/OsCore.h"
 
+#include "Base/BcProfiler.h"
 
 REFLECTION_DEFINE_DERIVED( GaGameComponent );
 
@@ -219,22 +220,25 @@ void GaGameComponent::onEndDrag( OsEventInputMouse Event )
 		// Check for unit.
 		for( auto* Unit : Units_ )
 		{
-			auto ScreenPos = Camera_->getScreenPosition( Unit->getParentEntity()->getWorldPosition() );
-			auto A = MaVec2d( 
-				std::min( SelectionBoxA_.x(), SelectionBoxB_.x() ),
-				std::min( SelectionBoxA_.y(), SelectionBoxB_.y() ) );
-			auto B = MaVec2d( 
-				std::max( SelectionBoxA_.x(), SelectionBoxB_.x() ),
-				std::max( SelectionBoxA_.y(), SelectionBoxB_.y() ) );		
-
-			if( ScreenPos.x() > A.x() && ScreenPos.y() > A.y() && 
-				ScreenPos.x() < B.x() && ScreenPos.y() < B.y() )
+			if( Unit->isSelectable() )
 			{
-				SelectedUnitIDs_.push_back( Unit->getID() );
+				auto ScreenPos = Camera_->getScreenPosition( Unit->getParentEntity()->getWorldPosition() );
+				auto A = MaVec2d( 
+					std::min( SelectionBoxA_.x(), SelectionBoxB_.x() ),
+					std::min( SelectionBoxA_.y(), SelectionBoxB_.y() ) );
+				auto B = MaVec2d( 
+					std::max( SelectionBoxA_.x(), SelectionBoxB_.x() ),
+					std::max( SelectionBoxA_.y(), SelectionBoxB_.y() ) );		
+
+				if( ScreenPos.x() > A.x() && ScreenPos.y() > A.y() && 
+					ScreenPos.x() < B.x() && ScreenPos.y() < B.y() )
+				{
+					SelectedUnitIDs_.push_back( Unit->getID() );
+				}
 			}
 		}
-
-		rebuildCommands();
+		CommandsDirty_ = BcTrue;
+		SelectedCommand_ = GaUnitCommand();
 	}
 
 	// Do click anyway.
@@ -282,21 +286,24 @@ void GaGameComponent::onClick( OsEventInputMouse Event )
 	// Determine selection unit.
 	for( auto* Unit : Units_ )
 	{
-		MaVec3d NearPos, FarPos;
-		Camera_->getWorldPosition( MaVec2d( Event.MouseX_, Event.MouseY_ ), NearPos, FarPos );
-		auto SpatialComponent = Unit->getComponentByType< ScnSpatialComponent >();
-		if( SpatialComponent != nullptr )
+		if( Unit->isSelectable() )
 		{
-			auto AABB = SpatialComponent->getAABB();
+			MaVec3d NearPos, FarPos;
+			Camera_->getWorldPosition( MaVec2d( Event.MouseX_, Event.MouseY_ ), NearPos, FarPos );
+			auto SpatialComponent = Unit->getComponentByType< ScnSpatialComponent >();
+			if( SpatialComponent != nullptr )
+			{
+				auto AABB = SpatialComponent->getAABB();
 
-			MaVec3d Intersection;
-			if( AABB.lineIntersect( NearPos, FarPos, &Intersection, nullptr ) )
-			{	
-				SelectedUnit = Unit;
+				MaVec3d Intersection;
+				if( AABB.lineIntersect( NearPos, FarPos, &Intersection, nullptr ) )
+				{	
+					SelectedUnit = Unit;
+				}
 			}
 		}
 	}
-
+	
 	if( SelectedCommand_.Type_ == GaUnitCommandType::INVALID )
 	{
 		// No command and left click, select.
@@ -306,17 +313,7 @@ void GaGameComponent::onClick( OsEventInputMouse Event )
 			{
 				SelectedUnitIDs_.clear();
 				SelectedUnitIDs_.push_back( SelectedUnit->getID() );
-			}
-		}
-
-		// If no command and right click, move.
-		if( Event.ButtonCode_ == 1 )
-		{
-			if( SelectedValidLocation || SelectedUnit )
-			{
-				Command.Type_ = GaUnitCommandType::MOVE;
-				Command.Location_ = SelectedLocation;
-				Command.UnitID_ = SelectedUnit ? SelectedUnit->getID() : BcErrorCode;
+				SelectedCommand_ = GaUnitCommand();
 			}
 		}
 	}
@@ -327,6 +324,19 @@ void GaGameComponent::onClick( OsEventInputMouse Event )
 		Command.Location_ = SelectedLocation;
 	}
 	
+	// If right click, move.
+	if( Event.ButtonCode_ == 1 )
+	{
+		SelectedCommand_ = GaUnitCommand();
+		if( SelectedValidLocation || SelectedUnit )
+		{
+			Command.Type_ = GaUnitCommandType::MOVE;
+			Command.Location_ = SelectedLocation;
+			Command.UnitID_ = SelectedUnit ? SelectedUnit->getID() : BcErrorCode;
+		}
+	}
+
+
 	// If we have a command.
 	if( Command.Type_ != GaUnitCommandType::INVALID )
 	{
@@ -380,12 +390,14 @@ void GaGameComponent::onClick( OsEventInputMouse Event )
 		}
 	}
 
-	rebuildCommands();
+	CommandsDirty_ = BcTrue;
 }
 
 
 void GaGameComponent::update( BcF32 Tick )
 {
+	PSY_PROFILE_FUNCTION;
+
 	static bool InterpolatedRender = true;
 
 #if !PSY_PRODUCTION
@@ -438,6 +450,8 @@ void GaGameComponent::update( BcF32 Tick )
 	TickAccumulator_ += Tick;
 	while( TickAccumulator_ >= TickRate_ )
 	{
+		PSY_PROFILER_SECTION( LocalRoot, "Simulate" );
+
 		TickAccumulator_ -= TickRate_;
 
 		// Add all pending units.
@@ -466,7 +480,6 @@ void GaGameComponent::update( BcF32 Tick )
 			if( FoundIt != Units_.end() )
 			{
 				Units_.erase( FoundIt );
-				DestroyedUnits_.push_back( Unit );
 				Unit->destroyUnit();
 			}
 		}
@@ -482,15 +495,18 @@ void GaGameComponent::update( BcF32 Tick )
 
 	// Rendering.
 	const BcF32 Alpha = InterpolatedRender ? TickAccumulator_ / TickRate_ : 0;
-	for( auto* Unit : Units_ )
 	{
-		GaUnitState State = Unit->getInterpolatedState( Alpha );
-
-		MaVec3d Position( State.Position_.x(), State.Position_.y(), State.Position_.z() );
-
-		Unit->getParentEntity()->setLocalPosition( Position );
+		PSY_PROFILER_SECTION( LocalRoot, "Update render pos" );
+		for( auto* Unit : Units_ )
+		{
+			GaUnitState State = Unit->getInterpolatedState( Alpha );
+	
+			MaVec3d Position( State.Position_.x(), State.Position_.y(), State.Position_.z() );
+	
+			Unit->getParentEntity()->setLocalPosition( Position );
+		}
 	}
-
+	
 	// Draw selection (debug).
 	for( auto UnitID : SelectedUnitIDs_ )
 	{
@@ -540,6 +556,12 @@ void GaGameComponent::update( BcF32 Tick )
 
 	drawMinimap();
 
+
+	if( CommandsDirty_ ) 
+	{
+		rebuildCommands();
+		CommandsDirty_ = BcFalse;
+	}
 }
 
 
@@ -579,6 +601,8 @@ void GaGameComponent::drawMinimap()
 
 class GaUnitComponent* GaGameComponent::getUnit( BcU32 UnitID )
 {
+	PSY_PROFILE_FUNCTION;
+
 	// TODO: Lookup table.
 	for( auto* Unit : Units_ )
 	{
@@ -591,8 +615,10 @@ class GaUnitComponent* GaGameComponent::getUnit( BcU32 UnitID )
 }
 
 
-void GaGameComponent::spawnUnit( class ScnEntity* BaseEntity, BcU32 TeamID, GaVec3d Position )
+GaUnitComponent* GaGameComponent::spawnUnit( class ScnEntity* BaseEntity, BcU32 TeamID, GaVec3d Position )
 {
+	PSY_PROFILE_FUNCTION;
+
 	MaVec4d SpawnPosition;
 
 	auto* Entity = ScnCore::pImpl()->spawnEntity( ScnEntitySpawnParams( BcName::INVALID, BaseEntity, MaMat4d(), getParentEntity() ) );
@@ -601,11 +627,17 @@ void GaGameComponent::spawnUnit( class ScnEntity* BaseEntity, BcU32 TeamID, GaVe
 	BcAssert( Unit );
 	Unit->setupUnit( this, CurrentUnitID_++, TeamID, Position );
 	PendingRegisterUnits_.push_back( Unit );
+
+	Unit->getParentEntity()->setLocalPosition( MaVec3d( Position.x(), Position.y(), Position.z() ) );
+
+	return Unit;
 }
 
 
 void GaGameComponent::destroyUnit( BcU32 UnitID )
 {
+	PSY_PROFILE_FUNCTION;
+
 	// Remove from selection and rebuild selection.
 	for( auto It = SelectedUnitIDs_.begin(); It != SelectedUnitIDs_.end(); )
 	{
@@ -619,7 +651,7 @@ void GaGameComponent::destroyUnit( BcU32 UnitID )
 		}
 	}
 
-	rebuildCommands();
+	CommandsDirty_ = BcTrue;
 
 	// TODO: Lookup table.
 	for( auto* Unit : Units_ )
@@ -635,13 +667,18 @@ void GaGameComponent::destroyUnit( BcU32 UnitID )
 
 void GaGameComponent::command( GaUnitComponent* Unit, const GaUnitCommand& Command )
 {
+	PSY_PROFILE_FUNCTION;
+
 	// TODO: Send as network/event?
 	Unit->command( Command );
+	SelectedCommand_ = GaUnitCommand();
 }
 
 
 void GaGameComponent::command( const GaUnitCommand& Command )
 {
+	PSY_PROFILE_FUNCTION;
+
 	for( auto UnitID : SelectedUnitIDs_ )
 	{
 		auto* Unit = getUnit( UnitID );
@@ -650,26 +687,29 @@ void GaGameComponent::command( const GaUnitCommand& Command )
 			command( Unit, Command );
 		}
 	}
-	SelectedCommand_ = GaUnitCommand();
-	rebuildCommands();
+	CommandsDirty_ = BcTrue;
 }
 
 
 void GaGameComponent::selectCommand( const GaUnitCommand& Command )
 {
+	PSY_PROFILE_FUNCTION;
+
 	SelectedCommand_ = Command;
 
 	// Stop & behaviour commands are immediate.
 	if( Command.Type_ == GaUnitCommandType::STOP || Command.Type_ == GaUnitCommandType::BEHAVIOUR )
 	{
 		command( Command );
-		rebuildCommands();
+		CommandsDirty_ = BcTrue;
 	}
 }
 
 
 void GaGameComponent::rebuildCommands()
 {
+	PSY_PROFILE_FUNCTION;
+
 	// List of selected units.
 	std::vector< GaUnitComponent* > Units;
 	for( auto UnitID : SelectedUnitIDs_ )
@@ -727,6 +767,10 @@ void GaGameComponent::rebuildCommands()
 		}		
 	}
 
+	// If command set changes, clear selected command.
+	if( CommandSet != Commands_ )
+	{
+		SelectedCommand_ = GaUnitCommand();
+	}
 	Commands_ = std::move( CommandSet );
-	SelectedCommand_ = GaUnitCommand();
 }

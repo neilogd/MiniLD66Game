@@ -36,7 +36,7 @@ public:
 	void registerUnit( class GaUnitComponent* Unit );
 	void deregisterUnit( class GaUnitComponent* Unit );
 
-	void spawnUnit( class ScnEntity* BaseEntity, BcU32 TeamID, GaVec3d Position );
+	GaUnitComponent* spawnUnit( class ScnEntity* BaseEntity, BcU32 TeamID, GaVec3d Position );
 	void destroyUnit( BcU32 UnitID );
 
 	void command( GaUnitComponent* Unit, const GaUnitCommand& Command );
@@ -58,8 +58,6 @@ private:
 	std::vector< class GaUnitComponent* > PendingRegisterUnits_;
 	std::vector< class GaUnitComponent* > PendingDeregisterUnits_;
 
-	std::vector< class GaUnitComponent* > DestroyedUnits_;
-
 	class GaCameraComponent* Camera_;
 	class ScnMaterialComponent* Material_;
 	class ScnCanvasComponent* Canvas_;
@@ -68,6 +66,7 @@ private:
 
 	std::set< GaUnitCommand > Commands_;
 	GaUnitCommand SelectedCommand_;
+	BcBool CommandsDirty_ = BcFalse;
 
 	// Mouse input.
 	enum class InputState
