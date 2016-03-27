@@ -26,11 +26,15 @@ public:
 
 	void update( BcF32 Tick );
 
+	void drawMinimap();
+
 	class GaUnitComponent* getUnit( BcU32 UnitID );
 
 	void registerUnit( class GaUnitComponent* Unit );
 	void deregisterUnit( class GaUnitComponent* Unit );
 
+	void spawnUnit( class ScnEntity* BaseEntity, BcU32 TeamID, GaVec3d Position );
+	void destroyUnit( BcU32 UnitID );
 	
 
 private:
@@ -38,6 +42,7 @@ private:
 	GaReal TickRate_ = 0.0f;
 	GaReal TickAccumulator_ = 0.0f;
 	BcU32 CurrentUnitID_ = 0;
+	BcU32 TeamID_;
 
 	ScnEntity* TestEntity_ = nullptr;
 
@@ -45,19 +50,21 @@ private:
 	std::vector< class GaUnitComponent* > PendingRegisterUnits_;
 	std::vector< class GaUnitComponent* > PendingDeregisterUnits_;
 
+	std::vector< class GaUnitComponent* > DestroyedUnits_;
+
 	class GaCameraComponent* Camera_;
 	class ScnMaterialComponent* Material_;
 	class ScnCanvasComponent* Canvas_;
 
 	std::vector< BcU32 > SelectedUnitIDs_;
 
+	// Mouse input.
 	enum class InputState
 	{
 		IDLE,
 		DOWN,
 		DRAGGING,
 	};
-
 	std::array< InputState, 8 > InputState_;
 	std::array< OsEventInputMouse, 8 > BeginDragMouseEvent_;
 

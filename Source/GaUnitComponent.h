@@ -23,6 +23,16 @@ public:
 
 	void onAttach( ScnEntityWeakRef Parent ) override;
 	void onDetach( ScnEntityWeakRef Parent ) override;
+
+	/**
+	 * Called to setup all state for game logic.
+	 */
+	void setupUnit( BcU32 ID, BcU32 TeamID, GaVec3d Position );
+
+	/**
+	 * Destroy unit. Will persist in the world still but play no part.
+	 */
+	void destroyUnit();
 	
 	void updateState();
 	void update( GaReal Tick );
@@ -30,9 +40,10 @@ public:
 	GaUnitState getState() const { return PrevState_; }
 	GaUnitState getInterpolatedState( GaReal Alpha ) const;
 
-	void setID( BcU32 ID ) { ID_ = ID; }
 	BcU32 getID() const { return ID_; }
+	BcU32 getTeamID() const { return TeamID_; }
 
+	
 	void commandMove( GaVec3d MovePosition );
 
 private:
@@ -42,7 +53,7 @@ private:
 	BcS32 MaxVelocity_ = 1;
 
 	// General.
-	BcU32 TeamFlags_ = 0;
+	BcU32 TeamID_ = 0;
 
 	// Unit state.
 	GaUnitState CurrState_;

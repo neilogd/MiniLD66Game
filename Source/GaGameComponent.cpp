@@ -320,7 +320,7 @@ void GaGameComponent::update( BcF32 Tick )
 
 			if( ImGui::Button( "Spawn test entity" ) )
 			{
-				ScnCore::pImpl()->spawnEntity( ScnEntitySpawnParams( BcName::INVALID, TestEntity_, MaMat4d(), getParentEntity() ) );
+				spawnUnit( TestEntity_, TeamID_, GaVec3d( 0.0f, 0.0f, 0.0f ) );
 			}
 
 			if( Units_.size() > 0 )
@@ -370,6 +370,8 @@ void GaGameComponent::update( BcF32 Tick )
 			if( FoundIt != Units_.end() )
 			{
 				Units_.erase( FoundIt );
+				DestroyedUnits_.push_back( Unit );
+				Unit->destroyUnit();
 			}
 		}
 		PendingDeregisterUnits_.clear();
@@ -440,7 +442,35 @@ void GaGameComponent::update( BcF32 Tick )
 #endif
 	}
 
+	drawMinimap();
+
 }
+
+
+void GaGameComponent::drawMinimap()
+{
+	OsClient* Client = OsCore::pImpl()->getClient( 0 );
+	MaVec2d ClientSize( Client->getWidth(), Client->getHeight() );
+	MaVec2d Size( 100.0f, 100.0f );
+	MaMat4d Transform;
+	Transform.translation( ClientSize - MaVec2d( 100.0f, 100.0f ) );
+	Canvas_->pushMatrix( Transform );
+	Canvas_->drawBox( -Size, Size, RsColour( 0.05f, 0.05f, 0.05f, 1.0f ), 0 );
+	
+	for( auto* Unit : Units_ )
+	{
+		auto Position = Unit->getParentEntity()->getWorldPosition();
+		if( Position.x() > -99.0f && Position.x() < 99.0f &&
+			Position.z() > -99.0f && Position.z() < 99.0f )
+		{
+			Canvas_->drawBox( Position.xz() - MaVec2d( 1.0f, 1.0f ), Position.xz() + MaVec2d( 1.0f, 1.0f ), RsColour( 1.0f, 1.0f, 1.0f, 1.0f ), 0 );
+		}
+	}
+
+	Canvas_->drawLineBox( -Size, Size, RsColour( 0.0f, 0.0f, 0.0f, 1.0f ), 0 );
+	Canvas_->popMatrix();
+}
+
 
 class GaUnitComponent* GaGameComponent::getUnit( BcU32 UnitID )
 {
@@ -455,13 +485,29 @@ class GaUnitComponent* GaGameComponent::getUnit( BcU32 UnitID )
 	return nullptr;
 }
 
-void GaGameComponent::registerUnit( class GaUnitComponent* Unit )
+
+void GaGameComponent::spawnUnit( class ScnEntity* BaseEntity, BcU32 TeamID, GaVec3d Position )
 {
-	Unit->setID( CurrentUnitID_++ );
+	MaVec4d SpawnPosition;
+
+	auto* Entity = ScnCore::pImpl()->spawnEntity( ScnEntitySpawnParams( BcName::INVALID, BaseEntity, MaMat4d(), getParentEntity() ) );
+	BcAssert( Entity );
+	auto* Unit = Entity->getComponentByType< GaUnitComponent >();
+	BcAssert( Unit );
+	Unit->setupUnit( CurrentUnitID_++, TeamID, Position );
 	PendingRegisterUnits_.push_back( Unit );
 }
 
-void GaGameComponent::deregisterUnit( class GaUnitComponent* Unit )
+
+void GaGameComponent::destroyUnit( BcU32 UnitID )
 {
-	PendingDeregisterUnits_.push_back( Unit );
+	// TODO: Lookup table.
+	for( auto* Unit : Units_ )
+	{
+		if( Unit->getID() == UnitID )
+		{
+			PendingDeregisterUnits_.push_back( Unit );
+			break;
+		}
+	}
 }

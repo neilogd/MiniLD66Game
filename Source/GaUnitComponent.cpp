@@ -38,10 +38,7 @@ void GaUnitComponent::onAttach( ScnEntityWeakRef Parent )
 	GameComponent_ = Parent->getComponentAnyParentByType< GaGameComponent >();
 	BcAssert( GameComponent_ );
 
-	GameComponent_->registerUnit( this );
-
 	CurrState_.Health_ = MaxHealth_;
-
 
 	PrevState_ = CurrState_;
 }
@@ -49,9 +46,24 @@ void GaUnitComponent::onAttach( ScnEntityWeakRef Parent )
 
 void GaUnitComponent::onDetach( ScnEntityWeakRef Parent )
 {
-	GameComponent_->deregisterUnit( this );
-
 	Super::onDetach( Parent );
+}
+
+
+void GaUnitComponent::setupUnit( BcU32 ID, BcU32 TeamID, GaVec3d Position )
+{
+	ID_ = ID;
+	TeamID_ = ID;
+	CurrState_.Position_ = Position;
+	CurrState_.Health_ = MaxHealth_;
+
+	PrevState_ = CurrState_;
+}
+
+
+void GaUnitComponent::destroyUnit()
+{
+	updateState();
 }
 
 
