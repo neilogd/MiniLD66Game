@@ -92,9 +92,6 @@ void GaUnitComponent::onAttach( ScnEntityWeakRef Parent )
 {
 	Super::onAttach( Parent );
 
-	GameComponent_ = Parent->getComponentAnyParentByType< GaGameComponent >();
-	BcAssert( GameComponent_ );
-
 	CurrState_.Health_ = MaxHealth_;
 
 	PrevState_ = CurrState_;
@@ -107,8 +104,9 @@ void GaUnitComponent::onDetach( ScnEntityWeakRef Parent )
 }
 
 
-void GaUnitComponent::setupUnit( BcU32 ID, BcU32 TeamID, GaVec3d Position )
+void GaUnitComponent::setupUnit( GaGameComponent* Game, BcU32 ID, BcU32 TeamID, GaVec3d Position )
 {
+	GameComponent_ = Game;
 	ID_ = ID;
 	TeamID_ = ID;
 	CurrState_.Position_ = Position;
@@ -160,16 +158,29 @@ void GaUnitComponent::update( GaReal Tick )
 
 	// Do movement.
 	{
+		if( MoveUnitID_ != BcErrorCode )
+		{
+			auto Unit = GameComponent_->getUnit( MoveUnitID_ );
+			if( Unit )
+			{
+				MovePosition_ = Unit->getState().Position_;
+			}
+			else
+			{
+				command( GaUnitCommand( GaUnitCommandType::STOP, BcErrorCode ) );
+			}
+		}
 		const auto DistanceRemaining = ( MovePosition_ - CurrState_.Position_ ).magnitude();
 		if( DistanceRemaining > 0.0f )
 		{
 			auto MoveVector = CurrState_.Velocity_ * Tick;
 			if( MoveVector.magnitude() > DistanceRemaining )
 			{
-				// Clamp to final position and reset velocity + acceleration.
 				CurrState_.Position_ = MovePosition_;
-				CurrState_.Velocity_ = GaVec3d( 0.0f, 0.0f, 0.0f );
-				CurrState_.Acceleration_ = GaVec3d( 0.0f, 0.0f, 0.0f );
+				if( MoveUnitID_ == BcErrorCode )
+				{
+					command( GaUnitCommand( GaUnitCommandType::STOP, BcErrorCode ) );
+				}
 			}
 			else
 			{
@@ -182,10 +193,10 @@ void GaUnitComponent::update( GaReal Tick )
 		}
 		else
 		{
-			// Clamp to final position and reset velocity + acceleration.
-			CurrState_.Position_ = MovePosition_;
-			CurrState_.Velocity_ = GaVec3d( 0.0f, 0.0f, 0.0f );
-			CurrState_.Acceleration_ = GaVec3d( 0.0f, 0.0f, 0.0f );
+			if( MoveUnitID_ == BcErrorCode )
+			{
+				command( GaUnitCommand( GaUnitCommandType::STOP, BcErrorCode ) );
+			}
 		}
 	}
 }
@@ -212,17 +223,17 @@ void GaUnitComponent::command( const GaUnitCommand& InCommand )
 			switch( InCommand.Type_ )
 			{
 			case GaUnitCommandType::MOVE:
-				if( InCommand.UnitID_ == BcErrorCode )
-				{
-					MovePosition_ = InCommand.Location_;
-				}
-				else
-				{
-					BcBreakpoint;
-				}
+				MoveUnitID_ = InCommand.UnitID_;
+				MovePosition_ = InCommand.Location_;
 				break;
 			case GaUnitCommandType::STOP:
-				MovePosition_ = CurrState_.Position_;
+				{
+					MovePosition_ = CurrState_.Position_;
+					MoveUnitID_ = BcErrorCode;
+					CurrState_.Velocity_ = GaVec3d( 0.0f, 0.0f, 0.0f );
+					CurrState_.Acceleration_ = GaVec3d( 0.0f, 0.0f, 0.0f );
+				}
+				
 				break;
 			case GaUnitCommandType::ATTACK:
 				PSY_LOG( "Unimplemented" );

@@ -312,10 +312,11 @@ void GaGameComponent::onClick( OsEventInputMouse Event )
 		// If no command and right click, move.
 		if( Event.ButtonCode_ == 1 )
 		{
-			if( SelectedValidLocation )
+			if( SelectedValidLocation || SelectedUnit )
 			{
 				Command.Type_ = GaUnitCommandType::MOVE;
 				Command.Location_ = SelectedLocation;
+				Command.UnitID_ = SelectedUnit ? SelectedUnit->getID() : BcErrorCode;
 			}
 		}
 	}
@@ -598,7 +599,7 @@ void GaGameComponent::spawnUnit( class ScnEntity* BaseEntity, BcU32 TeamID, GaVe
 	BcAssert( Entity );
 	auto* Unit = Entity->getComponentByType< GaUnitComponent >();
 	BcAssert( Unit );
-	Unit->setupUnit( CurrentUnitID_++, TeamID, Position );
+	Unit->setupUnit( this, CurrentUnitID_++, TeamID, Position );
 	PendingRegisterUnits_.push_back( Unit );
 }
 

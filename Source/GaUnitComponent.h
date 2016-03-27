@@ -129,7 +129,7 @@ public:
 	/**
 	 * Called to setup all state for game logic.
 	 */
-	void setupUnit( BcU32 ID, BcU32 TeamID, GaVec3d Position );
+	void setupUnit( class GaGameComponent* Game, BcU32 ID, BcU32 TeamID, GaVec3d Position );
 
 	/**
 	 * Destroy unit. Will persist in the world still but play no part.
@@ -169,6 +169,7 @@ private:
 		
 	// Movement commands.
 	GaVec3d MovePosition_;
+	BcU32 MoveUnitID_;
 
 	// Attack commands.
 
