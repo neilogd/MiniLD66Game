@@ -8,7 +8,93 @@
 				{
 					"$Class" : "GaUnitComponent",
 					"maxhealth" : 100,
-					"maxvelocity" : 10
+
+					"behaviourstates" : [
+						{
+							"name" : "default",
+							"maxvelocity" : 10,
+							"commands" : [
+								{
+									"name" : "Mov[E]",
+									"key" : "E",
+									"type" : "MOVE"
+								},
+
+								{
+									"name" : "[A]ttack",
+									"key" : "A",
+									"type" : "ATTACK"
+								},
+
+								{
+									"name" : "Morph into [D]efense",
+									"key" : "D",
+									"type" : "BEHAVIOUR",
+									"behaviourstate" : "defense"
+								}
+							]
+						},
+					
+						{
+							"name" : "defense",
+							"maxvelocity" : 0,
+							"commands" : [
+								{
+									"name" : "[A]ttack",
+									"key" : "A",
+									"type" : "ATTACK"
+								},
+
+								{
+									"name" : "Morph into [D]efault",
+									"key" : "D",
+									"type" : "BEHAVIOUR_STATE_CHANGE",
+									"behaviourstate" : "default"
+								}
+							]
+						}
+					]
+				},
+
+				{
+					"$Class" : "ScnModelComponent",
+					"model" : "$(ScnModel:models.sphere)",
+
+					"scale" : "0.5, 0.5, 0.5"
+				}
+			]
+		},
+
+		{
+			"name"		:		"TestUnit_1",
+			"type"		:		"ScnEntity",
+
+			"components" : [
+				{
+					"$Class" : "GaUnitComponent",
+					"maxhealth" : 100,
+
+					"behaviourstates" : [
+						{
+							"name" : "default",
+							"maxvelocity" : 10,
+							"commands" : [
+								{
+									"name" : "Mov[E]",
+									"key" : "E",
+									"type" : "MOVE"
+								},
+
+							
+								{
+									"name" : "Morph into [F]uck yeah",
+									"key" : "F",
+									"type" : "BEHAVIOUR",
+									"behaviourstate" : "default"
+								}
+							]
+						}
+					]
 				},
 
 				{

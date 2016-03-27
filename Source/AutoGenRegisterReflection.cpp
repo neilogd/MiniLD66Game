@@ -211,5 +211,7 @@ void AutoGenRegisterReflection()
 	SysSystem::StaticRegisterClass();
 	GaCameraComponent::StaticRegisterClass();
 	GaGameComponent::StaticRegisterClass();
+	GaUnitCommand::StaticRegisterClass();
+	GaUnitBehaviourState::StaticRegisterClass();
 	GaUnitComponent::StaticRegisterClass();
 }

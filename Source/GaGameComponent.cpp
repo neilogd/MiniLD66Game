@@ -23,7 +23,7 @@ void GaGameComponent::StaticRegisterClass()
 	ReField* Fields[] = 
 	{
 		new ReField( "TickHz_", &GaGameComponent::TickHz_, bcRFF_IMPORTER ),
-		new ReField( "TestEntity_", &GaGameComponent::TestEntity_, bcRFF_IMPORTER | bcRFF_SHALLOW_COPY ),
+		new ReField( "TestEntities_", &GaGameComponent::TestEntities_, bcRFF_IMPORTER | bcRFF_SHALLOW_COPY ),
 		
 		new ReField( "TickRate_", &GaGameComponent::TickRate_, bcRFF_TRANSIENT ),
 		new ReField( "TickAccumulator_", &GaGameComponent::TickAccumulator_, bcRFF_TRANSIENT ),
@@ -212,6 +212,8 @@ void GaGameComponent::onEndDrag( OsEventInputMouse Event )
 				SelectedUnitIDs_.push_back( Unit->getID() );
 			}
 		}
+
+		rebuildCommands();
 	}
 
 	// Do click anyway.
@@ -297,7 +299,7 @@ void GaGameComponent::onClick( OsEventInputMouse Event )
 						auto Centre = GaVec3d( Intersection.x(), Intersection.y(), Intersection.z() );
 						auto MovePosition = ( Unit->getState().Position_ - Midpoint ) + Centre;
 
-						Unit->commandMove( MovePosition );
+						Unit->command( GaUnitCommand( GaUnitCommandType::MOVE, MovePosition ) );
 					}
 				}
 			}
@@ -318,19 +320,38 @@ void GaGameComponent::update( BcF32 Tick )
 		{
 			ImGui::Checkbox( "Enable interpolated render", &InterpolatedRender );
 
-			if( ImGui::Button( "Spawn test entity" ) )
+			for( auto TestEntity : TestEntities_ )
 			{
-				spawnUnit( TestEntity_, TeamID_, GaVec3d( 0.0f, 0.0f, 0.0f ) );
+				std::array< char, 256 > Buffer;
+				BcSPrintf( Buffer.data(), Buffer.size(), "Spawn %s", (*TestEntity->getName()).c_str() );
+				if( ImGui::Button( Buffer.data() ) )
+				{
+					spawnUnit( TestEntity, TeamID_, GaVec3d( 0.0f, 0.0f, 0.0f ) );
+				}
 			}
 
-			if( Units_.size() > 0 )
+			for( auto Command : Commands_ )
 			{
-				static float TargetPosition[3] = { 0.0f, 0.0f, 0.0f };
-				ImGui::InputFloat3( "Target Position", TargetPosition );
-				if( ImGui::Button( "Test Target Position" ) )
+				std::array< char, 256 > Buffer;
+				if( SelectedCommand_ != Command )
 				{
-					Units_.back()->commandMove( GaVec3d( TargetPosition[0], TargetPosition[1], TargetPosition[2] ) );
-				}			
+					BcSPrintf( Buffer.data(), Buffer.size(), "    %s    ", Command.Name_.c_str() );
+				}
+				else
+				{
+					BcSPrintf( Buffer.data(), Buffer.size(), "--> %s <--", Command.Name_.c_str() );
+				}
+				if( ImGui::Button( Buffer.data() ) )
+				{
+					if( SelectedCommand_ == Command )
+					{
+						SelectedCommand_ = GaUnitCommand();
+					}
+					else
+					{
+						SelectedCommand_ = Command;
+					}
+				}
 			}
 			ImGui::TreePop();
 		}
@@ -447,6 +468,11 @@ void GaGameComponent::update( BcF32 Tick )
 }
 
 
+void GaGameComponent::actionMenu()
+{
+	// Grab 
+}
+
 void GaGameComponent::drawMinimap()
 {
 	OsClient* Client = OsCore::pImpl()->getClient( 0 );
@@ -460,6 +486,10 @@ void GaGameComponent::drawMinimap()
 	for( auto* Unit : Units_ )
 	{
 		auto Position = Unit->getParentEntity()->getWorldPosition();
+
+		// HACK: Rotate and flip appropriately later.
+		Position.x( -Position.x() );
+;
 		if( Position.x() > -99.0f && Position.x() < 99.0f &&
 			Position.z() > -99.0f && Position.z() < 99.0f )
 		{
@@ -501,6 +531,21 @@ void GaGameComponent::spawnUnit( class ScnEntity* BaseEntity, BcU32 TeamID, GaVe
 
 void GaGameComponent::destroyUnit( BcU32 UnitID )
 {
+	// Remove from selection and rebuild selection.
+	for( auto It = SelectedUnitIDs_.begin(); It != SelectedUnitIDs_.end(); )
+	{
+		if( *It == UnitID )
+		{
+			It = SelectedUnitIDs_.erase( It );
+		}
+		else
+		{
+			++It;
+		}
+	}
+
+	rebuildCommands();
+
 	// TODO: Lookup table.
 	for( auto* Unit : Units_ )
 	{
@@ -510,4 +555,68 @@ void GaGameComponent::destroyUnit( BcU32 UnitID )
 			break;
 		}
 	}
+}
+
+
+void GaGameComponent::rebuildCommands()
+{
+	// List of selected units.
+	std::vector< GaUnitComponent* > Units;
+	for( auto UnitID : SelectedUnitIDs_ )
+	{
+		auto Unit = getUnit( UnitID );
+		if( Unit )
+		{
+			Units.push_back( Unit );
+		}
+	}
+
+
+	// Build set of commands, then remove any that don't exist in all selected units.
+	std::set< GaUnitCommand > CommandSet;
+
+	for( auto Unit : Units )
+	{
+		auto BehaviourState = Unit->getBehaviourState();
+		for( const auto& Command : BehaviourState->Commands_ )
+		{
+			CommandSet.insert( Command );
+		}
+	}
+
+	// Trim out commands that don't exist.
+	for( auto CommandIt = CommandSet.begin(); CommandIt != CommandSet.end(); )
+	{
+		BcBool DoRemove = BcFalse;
+		for( auto Unit : Units )
+		{
+			BcBool Found = BcFalse;
+			auto BehaviourState = Unit->getBehaviourState();
+			for( const auto& Command : BehaviourState->Commands_ )
+			{
+				if( *CommandIt == Command )
+				{
+					Found = BcTrue;
+				}
+			}
+
+			if( !Found )
+			{
+				DoRemove = BcTrue;
+				break;
+			}
+		}
+
+		if( DoRemove == BcTrue )
+		{
+			CommandIt = CommandSet.erase( CommandIt );		
+		}
+		else
+		{
+			++CommandIt;
+		}		
+	}
+
+	Commands_ = std::move( CommandSet );
+	SelectedCommand_ = GaUnitCommand();
 }

@@ -5,6 +5,7 @@
 #include "System/Os/OsEvents.h"
 
 #include "GaTypes.h"
+#include "GaUnitComponent.h"
 
 class GaGameComponent:
 	public ScnComponent
@@ -26,6 +27,8 @@ public:
 
 	void update( BcF32 Tick );
 
+	void actionMenu();
+
 	void drawMinimap();
 
 	class GaUnitComponent* getUnit( BcU32 UnitID );
@@ -35,6 +38,8 @@ public:
 
 	void spawnUnit( class ScnEntity* BaseEntity, BcU32 TeamID, GaVec3d Position );
 	void destroyUnit( BcU32 UnitID );
+
+	void rebuildCommands();
 	
 
 private:
@@ -44,7 +49,7 @@ private:
 	BcU32 CurrentUnitID_ = 0;
 	BcU32 TeamID_ = 0;
 
-	ScnEntity* TestEntity_ = nullptr;
+	std::vector< ScnEntity* > TestEntities_;
 
 	std::vector< class GaUnitComponent* > Units_;
 	std::vector< class GaUnitComponent* > PendingRegisterUnits_;
@@ -57,6 +62,9 @@ private:
 	class ScnCanvasComponent* Canvas_;
 
 	std::vector< BcU32 > SelectedUnitIDs_;
+
+	std::set< GaUnitCommand > Commands_;
+	GaUnitCommand SelectedCommand_;
 
 	// Mouse input.
 	enum class InputState

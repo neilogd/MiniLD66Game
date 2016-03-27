@@ -61,7 +61,10 @@
 							"$Class" : "GaGameComponent",
 							"tickhz" : 10,
 
-							"testentity" : "$(ScnEntity:test_units.TestUnit_0)"
+							"testentities" : [
+								"$(ScnEntity:test_units.TestUnit_0)",
+								"$(ScnEntity:test_units.TestUnit_1)"
+							]
 						}
 					]
 				}

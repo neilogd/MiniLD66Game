@@ -7,15 +7,58 @@
 
 #include "System/Scene/Rendering/ScnModel.h"
 
+REFLECTION_DEFINE_BASE( GaUnitCommand );
+
+void GaUnitCommand::StaticRegisterClass()
+{
+	ReField* Fields[] = 
+	{
+		new ReField( "Name_", &GaUnitCommand::Name_, bcRFF_IMPORTER ),
+		new ReField( "Key_", &GaUnitCommand::Key_, bcRFF_IMPORTER ),
+		new ReField( "Type_", &GaUnitCommand::Type_, bcRFF_IMPORTER ),
+		new ReField( "UnitID_", &GaUnitCommand::UnitID_, bcRFF_IMPORTER ),
+		new ReField( "Location_", &GaUnitCommand::Location_, bcRFF_IMPORTER ),
+		new ReField( "BehaviourState_", &GaUnitCommand::BehaviourState_, bcRFF_IMPORTER ),
+	};
+
+	using namespace std::placeholders;
+	ReRegisterClass< GaUnitCommand >( Fields );
+
+
+	ReEnumConstant* GaUnitCommandTypeEnumConstants[] = 
+	{
+		new ReEnumConstant( "MOVE", GaUnitCommandType::MOVE ),
+		new ReEnumConstant( "ATTACK", GaUnitCommandType::ATTACK ),
+		new ReEnumConstant( "BEHAVIOUR", GaUnitCommandType::BEHAVIOUR )
+	};
+	ReRegisterEnum< GaUnitCommandType >( GaUnitCommandTypeEnumConstants );
+}
+
+
+REFLECTION_DEFINE_BASE( GaUnitBehaviourState );
+
+void GaUnitBehaviourState::StaticRegisterClass()
+{
+	ReField* Fields[] = 
+	{
+		new ReField( "Name_", &GaUnitBehaviourState::Name_, bcRFF_IMPORTER ),
+		new ReField( "MaxVelocity_", &GaUnitBehaviourState::MaxVelocity_, bcRFF_IMPORTER ),
+		new ReField( "Commands_", &GaUnitBehaviourState::Commands_, bcRFF_IMPORTER ),
+	};
+
+	using namespace std::placeholders;
+	ReRegisterClass< GaUnitBehaviourState >( Fields );
+}
+
 REFLECTION_DEFINE_DERIVED( GaUnitComponent );
+
 
 void GaUnitComponent::StaticRegisterClass()
 {
 	ReField* Fields[] = 
 	{
 		new ReField( "MaxHealth_", &GaUnitComponent::MaxHealth_, bcRFF_IMPORTER ),
-		new ReField( "MaxVelocity_", &GaUnitComponent::MaxVelocity_, bcRFF_IMPORTER ),
-		
+		new ReField( "BehaviourStates_", &GaUnitComponent::BehaviourStates_, bcRFF_IMPORTER | bcRFF_SHALLOW_COPY ),
 	};
 
 	using namespace std::placeholders;
@@ -30,6 +73,15 @@ GaUnitComponent::GaUnitComponent()
 
 GaUnitComponent::~GaUnitComponent()
 {
+	// We are the basis or need to delete them.
+	if( getBasis() == nullptr || DeleteBehaviourState_ )
+	{
+		for( auto BehaviourState : BehaviourStates_ )
+		{
+			delete BehaviourState;
+		}
+	}
+	BehaviourStates_.clear();
 }
 
 
@@ -61,7 +113,10 @@ void GaUnitComponent::setupUnit( BcU32 ID, BcU32 TeamID, GaVec3d Position )
 
 	PrevState_ = CurrState_;
 
-
+	// Set default state.
+	BcAssert( BehaviourStates_.size() > 0 );
+	CurrBehaviourState_ = BehaviourStates_[ 0 ];
+	
 	// Team colours hack.
 	std::array< RsColour, 2 > TeamColour =  
 	{
@@ -92,7 +147,9 @@ void GaUnitComponent::updateState()
 
 void GaUnitComponent::update( GaReal Tick )
 {
-	// Do behaviour.
+	BcAssert( CurrBehaviourState_ );
+
+	// Do behaviour related stuff.
 	// Always use the prev state.
 	{
 		
@@ -117,7 +174,7 @@ void GaUnitComponent::update( GaReal Tick )
 				CurrState_.Position_ = CurrState_.Position_ + MoveVector;
 				CurrState_.Velocity_ = CurrState_.Velocity_ + CurrState_.Acceleration_ * Tick;
 
-				CurrState_.Velocity_ = ( MovePosition_ - CurrState_.Position_ ).normal() * MaxVelocity_;
+				CurrState_.Velocity_ = ( MovePosition_ - CurrState_.Position_ ).normal() * CurrBehaviourState_->MaxVelocity_;
 			}
 		}
 		else
@@ -142,7 +199,40 @@ GaUnitState GaUnitComponent::getInterpolatedState( GaReal Alpha ) const
 }
 
 
-void GaUnitComponent::commandMove( GaVec3d MovePosition )
+void GaUnitComponent::command( const GaUnitCommand& InCommand )
 {
-	MovePosition_ = MovePosition;
+	// Check it can be ran.
+	for( const auto& Command : CurrBehaviourState_->Commands_ )
+	{
+		if( InCommand.Type_ == Command.Type_ )
+		{
+			switch( InCommand.Type_ )
+			{
+			case GaUnitCommandType::MOVE:
+				if( InCommand.UnitID_ == BcErrorCode )
+				{
+					MovePosition_ = InCommand.Location_;
+				}
+				else
+				{
+					BcBreakpoint;
+				}
+				break;
+			case GaUnitCommandType::ATTACK:
+				BcBreakpoint;
+				break;
+			case GaUnitCommandType::BEHAVIOUR:
+				for( const auto& BehaviourState : BehaviourStates_ )
+				{
+					if( InCommand.BehaviourState_ == BehaviourState->Name_ )
+					{
+						CurrBehaviourState_ = BehaviourState;
+						return;
+					}
+				}
+				break;			
+			}
+			break;
+		}
+	}
 }

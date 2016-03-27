@@ -13,6 +13,96 @@ struct GaUnitState
 	GaVec3d Acceleration_;
 };
 
+
+enum class GaUnitCommandType
+{
+	// Invalid command.
+	INVALID,
+	/// Move to target unit/location.
+	MOVE,
+	/// Attack target unit/location.
+	ATTACK,
+	/// Change unit behaviour state.
+	BEHAVIOUR,
+};
+
+
+class GaUnitCommand
+{
+public:
+	REFLECTION_DECLARE_BASE( GaUnitCommand );
+
+	GaUnitCommand():
+		Name_(),
+		Key_(),
+		Type_( GaUnitCommandType::INVALID )
+	{}
+	GaUnitCommand( GaUnitCommandType Type, BcU32 UnitID ):
+		Name_(),
+		Key_(),
+		Type_( Type ),
+		UnitID_( UnitID ),
+		Location_(),
+		BehaviourState_()
+	{}
+
+	GaUnitCommand( GaUnitCommandType Type, GaVec3d Location ):
+		Name_(),
+		Key_(),
+		Type_( Type ),
+		UnitID_( BcErrorCode ),
+		Location_( Location ),
+		BehaviourState_()
+	{}
+
+	/// Name of command. TODO: Static string?
+	std::string Name_;
+	/// Key for command. TODO: Static string?
+	std::string Key_;
+	/// Type of command.
+	GaUnitCommandType Type_;
+	/// Unit ID for MOVE, ATTACK.
+	BcU32 UnitID_;
+	/// Location for MOVE, ATTACK.
+	GaVec3d Location_;
+	/// Behaviour for command BEHAVIOUR. TODO: Static string?
+	std::string BehaviourState_;
+
+	bool operator < ( const GaUnitCommand& Other ) const
+	{
+		return std::make_tuple( Key_, Type_, Name_ ) < std::make_tuple( Other.Key_, Other.Type_, Other.Name_ );
+	}
+
+	bool operator == ( const GaUnitCommand& Other ) const
+	{
+		return std::make_tuple( Key_, Type_, Name_ ) == std::make_tuple( Other.Key_, Other.Type_, Other.Name_ );
+	}
+
+	bool operator != ( const GaUnitCommand& Other ) const
+	{
+		return std::make_tuple( Key_, Type_, Name_ ) != std::make_tuple( Other.Key_, Other.Type_, Other.Name_ );
+	}
+
+};
+
+
+class GaUnitBehaviourState
+{
+public:
+	REFLECTION_DECLARE_BASE( GaUnitBehaviourState );
+
+	GaUnitBehaviourState(){}
+	/// Name.
+	std::string Name_;
+	/// Max velocity.
+	BcS32 MaxVelocity_ = 1;
+
+	/// Valid commands.
+	std::vector< GaUnitCommand > Commands_;
+};
+
+
+
 class GaUnitComponent:
 	public ScnComponent
 {
@@ -38,20 +128,24 @@ public:
 	void updateState();
 	void update( GaReal Tick );
 
+	const GaUnitBehaviourState* getBehaviourState() const { return CurrBehaviourState_; }
+
 	GaUnitState getState() const { return PrevState_; }
 	GaUnitState getInterpolatedState( GaReal Alpha ) const;
 
 	BcU32 getID() const { return ID_; }
 	BcU32 getTeamID() const { return TeamID_; }
 
-	
-	void commandMove( GaVec3d MovePosition );
+	void command( const GaUnitCommand& InCommand );
 
 private:
-	class GaGameComponent* GameComponent_;
+	class GaGameComponent* GameComponent_ = nullptr;
 
 	BcS32 MaxHealth_ = 100;
-	BcS32 MaxVelocity_ = 1;
+
+	BcBool DeleteBehaviourState_ = BcFalse;
+	std::vector< GaUnitBehaviourState* > BehaviourStates_;
+	const GaUnitBehaviourState* CurrBehaviourState_ = nullptr;
 
 	// General.
 	BcU32 TeamID_ = 0;
