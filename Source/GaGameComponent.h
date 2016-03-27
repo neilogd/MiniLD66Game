@@ -42,7 +42,7 @@ private:
 	GaReal TickRate_ = 0.0f;
 	GaReal TickAccumulator_ = 0.0f;
 	BcU32 CurrentUnitID_ = 0;
-	BcU32 TeamID_;
+	BcU32 TeamID_ = 0;
 
 	ScnEntity* TestEntity_ = nullptr;
 

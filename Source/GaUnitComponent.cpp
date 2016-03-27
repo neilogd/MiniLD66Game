@@ -5,6 +5,8 @@
 #include "System/Scene/ScnComponentProcessor.h"
 #include "System/Scene/ScnEntity.h"
 
+#include "System/Scene/Rendering/ScnModel.h"
+
 REFLECTION_DEFINE_DERIVED( GaUnitComponent );
 
 void GaUnitComponent::StaticRegisterClass()
@@ -58,6 +60,21 @@ void GaUnitComponent::setupUnit( BcU32 ID, BcU32 TeamID, GaVec3d Position )
 	CurrState_.Health_ = MaxHealth_;
 
 	PrevState_ = CurrState_;
+
+
+	// Team colours hack.
+	std::array< RsColour, 2 > TeamColour =  
+	{
+		RsColour::RED,
+		RsColour::BLUE,
+	};
+
+	auto Model = getComponentByType< ScnModelComponent >();
+	BcAssert( Model );
+	Material_.MaterialBaseColour_ = TeamColour[ TeamID ];
+	
+	Model->setUniforms( Material_ );
+
 }
 
 

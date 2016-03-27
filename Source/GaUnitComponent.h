@@ -1,6 +1,7 @@
 #pragma once
 
 #include "System/Scene/ScnComponent.h"
+#include "System/Scene/Rendering/ScnShaderFileData.h"
 
 #include "GaTypes.h"
 
@@ -54,6 +55,8 @@ private:
 
 	// General.
 	BcU32 TeamID_ = 0;
+
+	ScnShaderMaterialUniformBlockData Material_;
 
 	// Unit state.
 	GaUnitState CurrState_;

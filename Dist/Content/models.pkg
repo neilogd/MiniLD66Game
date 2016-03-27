@@ -44,7 +44,7 @@
 			"defaulttextures" : {
 				"aDiffuseTex" : "$(ScnTexture:textures.white)",
 				"aNormalTex" : "$(ScnTexture:textures.normal)",
-				"aSpecularTex" : "$(ScnTexture:textures.black)",
+				"aSpecularTex" : "$(ScnTexture:textures.white)",
 				"aOpacityTex" : "$(ScnTexture:textures.white)",
 				"aReflectionTex" : "$(ScnTexture:cubemap_textures.cubemap)"
 			},
