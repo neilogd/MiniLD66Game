@@ -315,32 +315,16 @@ eEvtReturn GaCameraComponent::onKeyDown( EvtID ID, const EvtBaseEvent& Event )
 
 	switch( KeyboardEvent.KeyCode_ )
 	{
-	case OsEventInputKeyboard::KEYCODE_LEFT:
-		CameraRotationDelta_.y(  1.0f );
-		break;
-	case OsEventInputKeyboard::KEYCODE_RIGHT:
-		CameraRotationDelta_.y( -1.0f );
-		break;
 	case OsEventInputKeyboard::KEYCODE_UP:
-		CameraRotationDelta_.x( -1.0f );
-		break;
-	case OsEventInputKeyboard::KEYCODE_DOWN:
-		CameraRotationDelta_.x(  1.0f );
-		break;
-	case 'W':
-	case 'w':
 		CameraWalk_.y( -1.0f );
 		break;
-	case 'S':
-	case 's':
+	case OsEventInputKeyboard::KEYCODE_DOWN:
 		CameraWalk_.y( 1.0f );
 		break;
-	case 'A':
-	case 'a':
+	case OsEventInputKeyboard::KEYCODE_LEFT:
 		CameraWalk_.x( -1.0f );
 		break;
-	case 'D':
-	case 'd':
+	case OsEventInputKeyboard::KEYCODE_RIGHT:
 		CameraWalk_.x( 1.0f );
 		break;
 	case OsEventInputKeyboard::KEYCODE_SHIFT:
@@ -362,24 +346,12 @@ eEvtReturn GaCameraComponent::onKeyUp( EvtID ID, const EvtBaseEvent& Event )
 
 	switch( KeyboardEvent.KeyCode_ )
 	{
-	case OsEventInputKeyboard::KEYCODE_LEFT:
-	case OsEventInputKeyboard::KEYCODE_RIGHT:
-		CameraRotationDelta_.y( 0.0f );
-		break;
 	case OsEventInputKeyboard::KEYCODE_UP:
 	case OsEventInputKeyboard::KEYCODE_DOWN:
-		CameraRotationDelta_.x( 0.0f );
-		break;
-	case 'W':
-	case 'w':
-	case 'S':
-	case 's':
 		CameraWalk_.y( 0.0f );
 		break;
-	case 'A':
-	case 'a':
-	case 'D':
-	case 'd':
+	case OsEventInputKeyboard::KEYCODE_LEFT:
+	case OsEventInputKeyboard::KEYCODE_RIGHT:
 		CameraWalk_.x( 0.0f );
 		break;
 	case OsEventInputKeyboard::KEYCODE_F4:

@@ -35,15 +35,17 @@ public:
 	GaUnitCommand():
 		Name_(),
 		Key_(),
-		Type_( GaUnitCommandType::INVALID )
+		Type_( GaUnitCommandType::INVALID ),
+		UnitID_( BcErrorCode )
 	{}
+
 	GaUnitCommand( GaUnitCommandType Type, BcU32 UnitID ):
 		Name_(),
 		Key_(),
 		Type_( Type ),
 		UnitID_( UnitID ),
 		Location_(),
-		BehaviourState_()
+		Behaviour_()
 	{}
 
 	GaUnitCommand( GaUnitCommandType Type, GaVec3d Location ):
@@ -52,7 +54,7 @@ public:
 		Type_( Type ),
 		UnitID_( BcErrorCode ),
 		Location_( Location ),
-		BehaviourState_()
+		Behaviour_()
 	{}
 
 	/// Name of command. TODO: Static string?
@@ -66,7 +68,7 @@ public:
 	/// Location for MOVE, ATTACK.
 	GaVec3d Location_;
 	/// Behaviour for command BEHAVIOUR. TODO: Static string?
-	std::string BehaviourState_;
+	std::string Behaviour_;
 
 	bool operator < ( const GaUnitCommand& Other ) const
 	{
@@ -86,12 +88,12 @@ public:
 };
 
 
-class GaUnitBehaviourState
+class GaUnitBehaviour
 {
 public:
-	REFLECTION_DECLARE_BASE( GaUnitBehaviourState );
+	REFLECTION_DECLARE_BASE( GaUnitBehaviour );
 
-	GaUnitBehaviourState(){}
+	GaUnitBehaviour(){}
 	/// Name.
 	std::string Name_;
 	/// Max velocity.
@@ -128,7 +130,7 @@ public:
 	void updateState();
 	void update( GaReal Tick );
 
-	const GaUnitBehaviourState* getBehaviourState() const { return CurrBehaviourState_; }
+	const GaUnitBehaviour* getBehaviour() const { return CurrBehaviour_; }
 
 	GaUnitState getState() const { return PrevState_; }
 	GaUnitState getInterpolatedState( GaReal Alpha ) const;
@@ -143,9 +145,9 @@ private:
 
 	BcS32 MaxHealth_ = 100;
 
-	BcBool DeleteBehaviourState_ = BcFalse;
-	std::vector< GaUnitBehaviourState* > BehaviourStates_;
-	const GaUnitBehaviourState* CurrBehaviourState_ = nullptr;
+	BcBool DeleteBehaviour_ = BcFalse;
+	std::vector< GaUnitBehaviour* > Behaviours_;
+	const GaUnitBehaviour* CurrBehaviour_ = nullptr;
 
 	// General.
 	BcU32 TeamID_ = 0;

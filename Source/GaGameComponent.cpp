@@ -158,6 +158,27 @@ void GaGameComponent::onAttach( ScnEntityWeakRef Parent )
 			return evtRET_PASS;
 		} );
 
+	OsCore::pImpl()->subscribe( osEVT_INPUT_KEYDOWN, this,
+		[ this ]( EvtID ID, const EvtBaseEvent& InEvent )
+		{
+			auto Event = InEvent.get< OsEventInputKeyboard >();
+			std::string CommandKeyLower;
+			std::string CommandKeyUpper;
+			CommandKeyLower += tolower( Event.AsciiCode_ );
+			CommandKeyUpper += toupper( Event.AsciiCode_ );
+
+			for( const auto & Command : Commands_ )
+			{
+				if( Command.Key_ == CommandKeyLower ||
+					Command.Key_ == CommandKeyUpper )
+				{
+					selectCommand( Command );
+					break;
+				}
+			}
+
+			return evtRET_PASS;
+		} );
 }
 
 
@@ -235,32 +256,14 @@ void GaGameComponent::onCancelDrag( OsEventInputMouse Event )
 
 void GaGameComponent::onClick( OsEventInputMouse Event )
 {
-	if( Event.ButtonCode_ == 0 )
+	GaUnitComponent* SelectedUnit = nullptr;
+	GaVec3d SelectedLocation;
+	BcBool SelectedValidLocation = BcFalse;
+	GaUnitCommand Command;
+
+
+	// Determine selection location.
 	{
-		SelectedUnitIDs_.clear();
-
-		// Check for unit.
-		for( auto* Unit : Units_ )
-		{
-			MaVec3d NearPos, FarPos;
-			Camera_->getWorldPosition( MaVec2d( Event.MouseX_, Event.MouseY_ ), NearPos, FarPos );
-			auto SpatialComponent = Unit->getComponentByType< ScnSpatialComponent >();
-			if( SpatialComponent != nullptr )
-			{
-				auto AABB = SpatialComponent->getAABB();
-
-				MaVec3d Intersection;
-				if( AABB.lineIntersect( NearPos, FarPos, &Intersection, nullptr ) )
-				{	
-					SelectedUnitIDs_.push_back( Unit->getID() );
-				}
-			}
-		}
-	}
-
-	if( Event.ButtonCode_ == 1 )
-	{
-		// If we have selection, move to position on grid.
 		MaVec3d NearPos, FarPos;
 		Camera_->getWorldPosition( MaVec2d( Event.MouseX_, Event.MouseY_ ), NearPos, FarPos );
 
@@ -270,6 +273,64 @@ void GaGameComponent::onClick( OsEventInputMouse Event )
 		BcF32 Distance = 0.0f;
 		MaVec3d Intersection;
 		if( GroundPlane.lineIntersection( NearPos, FarPos, Distance, Intersection ) )
+		{
+			SelectedLocation = GaVec3d( Intersection.x(), Intersection.y(), Intersection.z() );
+			SelectedValidLocation = BcTrue;
+		}
+	}
+	
+	// Determine selection unit.
+	for( auto* Unit : Units_ )
+	{
+		MaVec3d NearPos, FarPos;
+		Camera_->getWorldPosition( MaVec2d( Event.MouseX_, Event.MouseY_ ), NearPos, FarPos );
+		auto SpatialComponent = Unit->getComponentByType< ScnSpatialComponent >();
+		if( SpatialComponent != nullptr )
+		{
+			auto AABB = SpatialComponent->getAABB();
+
+			MaVec3d Intersection;
+			if( AABB.lineIntersect( NearPos, FarPos, &Intersection, nullptr ) )
+			{	
+				SelectedUnit = Unit;
+			}
+		}
+	}
+
+	if( SelectedCommand_.Type_ == GaUnitCommandType::INVALID )
+	{
+		// No command and left click, select.
+		if( Event.ButtonCode_ == 0 )
+		{
+			if( SelectedUnit != nullptr )
+			{
+				SelectedUnitIDs_.clear();
+				SelectedUnitIDs_.push_back( SelectedUnit->getID() );
+			}
+		}
+
+		// If no command and right click, move.
+		if( Event.ButtonCode_ == 1 )
+		{
+			if( SelectedValidLocation )
+			{
+				Command.Type_ = GaUnitCommandType::MOVE;
+				Command.Location_ = SelectedLocation;
+			}
+		}
+	}
+	else
+	{
+		Command = SelectedCommand_;
+		Command.UnitID_ = SelectedUnit ? SelectedUnit->getID() : BcErrorCode;
+		Command.Location_ = SelectedLocation;
+	}
+	
+	// If we have a command.
+	if( Command.Type_ != GaUnitCommandType::INVALID )
+	{
+		// Move is a special case since formation is predetermined.
+		if( Command.Type_ == GaUnitCommandType::MOVE )
 		{
 			// Find midpoint.
 			GaVec3d Midpoint( 0.0f, 0.0f, 0.0f );
@@ -287,25 +348,38 @@ void GaGameComponent::onClick( OsEventInputMouse Event )
 			if( NoofUnits > 0.0f )
 			{
 				Midpoint /= NoofUnits;
+			}
 
-				// TODO: Position them in formation.
+			// TODO: Position them in formation.
 			
-				// Send all units to offsets around this position.
-				for( auto UnitID : SelectedUnitIDs_ )
-				{
-					auto* Unit = getUnit( UnitID );
-					if( Unit )
-					{
-						auto Centre = GaVec3d( Intersection.x(), Intersection.y(), Intersection.z() );
-						auto MovePosition = ( Unit->getState().Position_ - Midpoint ) + Centre;
+			// Send all units to offsets around this position.
+			for( auto UnitID : SelectedUnitIDs_ )
+			{
 
-						Unit->command( GaUnitCommand( GaUnitCommandType::MOVE, MovePosition ) );
-					}
+				auto* Unit = getUnit( UnitID );
+				if( Unit )
+				{
+					auto Centre = Command.Location_;
+					auto NewCommand = Command;
+					NewCommand.Location_ = ( Unit->getState().Position_ - Midpoint ) + Centre;
+					command( Unit, NewCommand );
 				}
 			}
 		}
-
+		else
+		{
+			for( auto UnitID : SelectedUnitIDs_ )
+			{
+				auto* Unit = getUnit( UnitID );
+				if( Unit )
+				{
+					Unit->command( Command );
+				}
+			}
+		}
 	}
+
+	rebuildCommands();
 }
 
 
@@ -345,11 +419,11 @@ void GaGameComponent::update( BcF32 Tick )
 				{
 					if( SelectedCommand_ == Command )
 					{
-						SelectedCommand_ = GaUnitCommand();
+						selectCommand( GaUnitCommand() );
 					}
 					else
 					{
-						SelectedCommand_ = Command;
+						selectCommand( Command );
 					}
 				}
 			}
@@ -558,6 +632,41 @@ void GaGameComponent::destroyUnit( BcU32 UnitID )
 }
 
 
+void GaGameComponent::command( GaUnitComponent* Unit, const GaUnitCommand& Command )
+{
+	// TODO: Send as network/event?
+	Unit->command( Command );
+}
+
+
+void GaGameComponent::command( const GaUnitCommand& Command )
+{
+	for( auto UnitID : SelectedUnitIDs_ )
+	{
+		auto* Unit = getUnit( UnitID );
+		if( Unit )
+		{
+			command( Unit, Command );
+		}
+	}
+	SelectedCommand_ = GaUnitCommand();
+	rebuildCommands();
+}
+
+
+void GaGameComponent::selectCommand( const GaUnitCommand& Command )
+{
+	SelectedCommand_ = Command;
+
+	// Behaviour commands are immediate.
+	if( Command.Type_ == GaUnitCommandType::BEHAVIOUR )
+	{
+		command( Command );
+		rebuildCommands();
+	}
+}
+
+
 void GaGameComponent::rebuildCommands()
 {
 	// List of selected units.
@@ -577,8 +686,8 @@ void GaGameComponent::rebuildCommands()
 
 	for( auto Unit : Units )
 	{
-		auto BehaviourState = Unit->getBehaviourState();
-		for( const auto& Command : BehaviourState->Commands_ )
+		auto Behaviour = Unit->getBehaviour();
+		for( const auto& Command : Behaviour->Commands_ )
 		{
 			CommandSet.insert( Command );
 		}
@@ -591,8 +700,8 @@ void GaGameComponent::rebuildCommands()
 		for( auto Unit : Units )
 		{
 			BcBool Found = BcFalse;
-			auto BehaviourState = Unit->getBehaviourState();
-			for( const auto& Command : BehaviourState->Commands_ )
+			auto Behaviour = Unit->getBehaviour();
+			for( const auto& Command : Behaviour->Commands_ )
 			{
 				if( *CommandIt == Command )
 				{

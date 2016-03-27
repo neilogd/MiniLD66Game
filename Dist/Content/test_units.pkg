@@ -9,7 +9,7 @@
 					"$Class" : "GaUnitComponent",
 					"maxhealth" : 100,
 
-					"behaviourstates" : [
+					"behaviours" : [
 						{
 							"name" : "default",
 							"maxvelocity" : 10,
@@ -30,7 +30,7 @@
 									"name" : "Morph into [D]efense",
 									"key" : "D",
 									"type" : "BEHAVIOUR",
-									"behaviourstate" : "defense"
+									"behaviour" : "defense"
 								}
 							]
 						},
@@ -48,8 +48,8 @@
 								{
 									"name" : "Morph into [D]efault",
 									"key" : "D",
-									"type" : "BEHAVIOUR_STATE_CHANGE",
-									"behaviourstate" : "default"
+									"type" : "BEHAVIOUR",
+									"behaviour" : "default"
 								}
 							]
 						}
@@ -74,7 +74,7 @@
 					"$Class" : "GaUnitComponent",
 					"maxhealth" : 100,
 
-					"behaviourstates" : [
+					"behaviours" : [
 						{
 							"name" : "default",
 							"maxvelocity" : 10,
@@ -90,7 +90,7 @@
 									"name" : "Morph into [F]uck yeah",
 									"key" : "F",
 									"type" : "BEHAVIOUR",
-									"behaviourstate" : "default"
+									"behaviour" : "default"
 								}
 							]
 						}

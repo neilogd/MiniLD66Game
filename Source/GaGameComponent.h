@@ -39,6 +39,9 @@ public:
 	void spawnUnit( class ScnEntity* BaseEntity, BcU32 TeamID, GaVec3d Position );
 	void destroyUnit( BcU32 UnitID );
 
+	void command( GaUnitComponent* Unit, const GaUnitCommand& Command );
+	void command( const GaUnitCommand& Command );
+	void selectCommand( const GaUnitCommand& Command );
 	void rebuildCommands();
 	
 
