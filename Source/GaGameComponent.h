@@ -80,7 +80,7 @@ private:
 
 	OsEventInputMouse LastMouseEvent_;
 
-	BcBool SelectionBoxEnable_;
+	BcBool SelectionBoxEnable_ = BcFalse;
 	MaVec2d SelectionBoxA_;
 	MaVec2d SelectionBoxB_;
 

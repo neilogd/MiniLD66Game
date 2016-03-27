@@ -526,10 +526,10 @@ void GaGameComponent::update( BcF32 Tick )
 	}
 
 	// 2D HUD stuff.
+	Canvas_->setMaterialComponent( Material_ );
 	{
 		if( SelectionBoxEnable_ )
 		{
-			Canvas_->setMaterialComponent( Material_ );
 			Canvas_->drawBox( SelectionBoxA_, SelectionBoxB_, RsColour( 0.0f, 1.0f, 0.0f, 0.1f ) );
 			Canvas_->drawLineBox( SelectionBoxA_, SelectionBoxB_, RsColour( 0.0f, 1.0f, 0.0f, 1.0f ) );
 		}
